@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Distribución Hipergeométrica</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #b4b4b4;
+            --bg-secondary: #ffffff;
+            --bg-card: #ddf0e5;
+            --accent-primary: #00774f;
+            --accent-secondary: #5a7c65;
+            --text-primary: #2c2c2c;
+            --text-secondary: #5a5a5a;
+            --error: #bd2116;
+            --success: #178d5c;
+            --border: #d4d4c8;
+            --highlight: #e8f0eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            letter-spacing: 0px;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            font-style: italic;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            color: var(--accent-primary);
+            margin-bottom: 1.25rem;
+            letter-spacing: 0px;
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            letter-spacing: 0px;
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--highlight);
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-primary);
+            cursor: pointer;
+        }
+
+        .radio-option label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: var(--accent-secondary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #captureBtn {
+            background: var(--success);
+        }
+
+        #captureBtn:hover {
+            background: #2f6239;
+        }
+
+        .alert {
+            padding: 1rem;
+            background: #fef5f5;
+            border: 1px solid var(--error);
+            border-left: 4px solid var(--error);
+            border-radius: 4px;
+            color: var(--error);
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #chartContainer {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        #resultsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+
+        #resultsTable th {
+            background: var(--bg-secondary);
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            color: var(--accent-primary);
+            font-size: 0.8rem;
+            letter-spacing: 0px;
+            border-bottom: 2px solid var(--accent-primary);
+            font-weight: 600;
+        }
+
+        #resultsTable td {
+            padding: 0.6rem 0.5rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        #resultsTable tr:hover {
+            background: var(--highlight);
+        }
+
+        .highlight-row {
+            background: var(--highlight) !important;
+            font-weight: 600;
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 2rem;
+            }
+
+            header {
+                margin-bottom: 3rem;
+                padding: 2rem 0;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+                letter-spacing: 0px;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+                letter-spacing: 0.5px;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr 1.5fr;
+                gap: 2rem;
+            }
+
+            .card {
+                padding: 2rem;
+            }
+
+            .card h2 {
+                font-size: 1.3rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+
+            label {
+                font-size: 0.9rem;
+                letter-spacing: 0px;
+            }
+
+            input[type="number"],
+            input[type="text"] {
+                padding: 0.8rem;
+                font-size: 1rem;
+            }
+
+            .radio-group {
+                flex-direction: row;
+                gap: 2rem;
+            }
+
+            .button-group {
+                flex-direction: row;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+
+            button {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+
+            #chartContainer {
+                height: 400px;
+                margin-bottom: 2rem;
+            }
+
+            #resultsTable {
+                font-size: 1rem;
+            }
+
+            #resultsTable th {
+                padding: 1rem;
+                font-size: 0.85rem;
+                letter-spacing: 0px;
+            }
+
+            #resultsTable td {
+                padding: 0.8rem 1rem;
+            }
+        }
+
+        .input-small {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0rem;
+        }
+
+        @media (min-width: 500px) {
+            .input-small {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        .formula-box {
+            background: var(--highlight);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            border-left: 4px solid var(--accent-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Distribución Hipergeométrica</h1>
+            <p class="subtitle">Calculadora Interactiva</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Panel de entrada -->
+            <div class="card">
+                <h2>Parámetros</h2>
+                
+                <div class="alert" id="alertBox"></div>
+
+                <div class="form-group input-small">
+                    <div>
+                        <label for="N">N (Población)</label>
+                        <input type="number" id="N" min="1" value="20">
+                    </div>
+                    <div>
+                        <label for="n">n (Muestra)</label>
+                        <input type="number" id="n" min="1" value="5">
+                    </div>
+                </div>
+
+                <div class="form-group input-small">
+                    <div>
+                        <label for="k">k (Éxitos en Población)</label>
+                        <input type="number" id="k" min="0" value="8">
+                    </div>
+                    <div>
+                        <label for="x">x (Éxitos en Muestra)</label>
+                        <input type="number" id="x" min="0" placeholder="Opcional">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="decimals">Decimales a Mostrar</label>
+                    <input type="number" id="decimals" min="0" max="15" value="9">
+                </div>
+
+                <div class="form-group">
+                    <label>Tipo de x</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="typeSuccess" name="xType" value="success" checked>
+                            <label for="typeSuccess">Éxitos</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="typeFailure" name="xType" value="failure">
+                            <label for="typeFailure">No Éxitos</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="populationLabel">¿Qué representa la población?</label>
+                    <input type="text" id="populationLabel" placeholder="Ej: caja con mangos">
+                </div>
+
+                <div class="form-group">
+                    <label for="successLabel">¿Qué representa un éxito?</label>
+                    <input type="text" id="successLabel" placeholder="Ej: mango bueno">
+                </div>
+
+                <div class="form-group">
+                    <label for="failureLabel">¿Qué representa un no éxito?</label>
+                    <input type="text" id="failureLabel" placeholder="Ej: mango malo">
+                </div>
+
+                <div class="button-group">
+                    <button id="calculateBtn">Calcular</button>
+                    <button id="captureBtn">Capturar</button>
+                </div>
+
+                <div class="formula-box">
+                    <strong>Fórmula:</strong><br>
+                    P(X=x) = [C(k,x) × C(N-k, n-x)] / C(N,n)
+                </div>
+            </div>
+
+            <!-- Panel de resultados -->
+            <div>
+                <div class="card results-section" id="resultsSection">
+                    <h2>Resultados</h2>
+                    
+                    <div id="chartContainer">
+                        <canvas id="chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card results-section" id="tableSection">
+                    <h2>Tabla de Probabilidades</h2>
+                    <div style="overflow-x: auto;">
+                        <table id="resultsTable">
+                            <thead>
+                                <tr>
+                                    <th>Fórmula</th>
+                                    <th>Probabilidad</th>
+                                    <th>Interpretación</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chart = null;
+
+        // Función para calcular factorial
+        function factorial(n) {
+            if (n <= 1) return 1;
+            let result = 1;
+            for (let i = 2; i <= n; i++) {
+                result *= i;
+            }
+            return result;
+        }
+
+        // Función para calcular combinación C(n, k)
+        function combination(n, k) {
+            if (k < 0 || k > n) return 0;
+            if (k === 0 || k === n) return 1;
+            
+            // Optimización: C(n,k) = C(n, n-k)
+            k = Math.min(k, n - k);
+            
+            let result = 1;
+            for (let i = 0; i < k; i++) {
+                result *= (n - i);
+                result /= (i + 1);
+            }
+            return result;
+        }
+
+        // Función para calcular probabilidad hipergeométrica
+        function hypergeometric(N, n, k, x) {
+            const numerator = combination(k, x) * combination(N - k, n - x);
+            const denominator = combination(N, n);
+            return numerator / denominator;
+        }
+
+        // Validar entradas
+        function validateInputs(N, n, k, x, isFailure) {
+            const errors = [];
+
+            if (N <= 0 || n <= 0 || k < 0) {
+                errors.push("Todos los valores deben ser no negativos (N, n > 0)");
+            }
+
+            if (!Number.isInteger(N) || !Number.isInteger(n) || !Number.isInteger(k)) {
+                errors.push("Todos los valores deben ser enteros");
+            }
+
+            // Solo validar x si tiene un valor
+            if (x !== null && x !== undefined) {
+                if (x < 0 || !Number.isInteger(x)) {
+                    errors.push("x debe ser un entero no negativo");
+                }
+            }
+
+            if (n > N) {
+                errors.push("El tamaño de la muestra (n) no puede ser mayor que la población (N)");
+            }
+
+            if (k > N) {
+                errors.push("Los éxitos en la población (k) no pueden ser mayores que N");
+            }
+
+            return errors;
+        }
+
+        // Calcular rango válido de x
+        function getValidRange(N, n, k, isFailure) {
+            if (isFailure) {
+                // Para no éxitos: Y = n - X, donde X son los éxitos
+                // Rango de Y: 0 a n
+                const minY = Math.max(0, n - k);
+                const maxY = Math.min(n, N - k);
+                return { min: minY, max: maxY };
+            } else {
+                const minX = Math.max(0, n - (N - k));
+                const maxX = Math.min(n, k);
+                return { min: minX, max: maxX };
+            }
+        }
+
+        // Función principal de cálculo
+        function calculate() {
+            const N = parseInt(document.getElementById('N').value);
+            const n = parseInt(document.getElementById('n').value);
+            const k = parseInt(document.getElementById('k').value);
+            const xInput = document.getElementById('x').value;
+            const x = xInput === '' ? null : parseInt(xInput);
+            const decimals = parseInt(document.getElementById('decimals').value) || 9;
+            const isFailure = document.getElementById('typeFailure').checked;
+
+            const populationLabel = document.getElementById('populationLabel').value || "población";
+            const successLabel = document.getElementById('successLabel').value || "éxito";
+            const failureLabel = document.getElementById('failureLabel').value || "no éxito";
+
+            const alertBox = document.getElementById('alertBox');
+            alertBox.classList.remove('show');
+
+            // Validar entradas básicas (sin validar x si está vacío)
+            const errors = validateInputs(N, n, k, x, isFailure);
+            if (errors.length > 0) {
+                alertBox.textContent = errors.join('. ');
+                alertBox.classList.add('show');
+                return;
+            }
+
+            // Obtener rango válido
+            const range = getValidRange(N, n, k, isFailure);
+            
+            // Verificar si x está fuera del rango válido (solo si x tiene valor)
+            let outOfRangeMessage = null;
+            if (x !== null && (x < range.min || x > range.max)) {
+                const label = isFailure ? failureLabel : successLabel;
+                const population = populationLabel;
+                
+                if (isFailure) {
+                    const maxPossible = N - k;
+                    if (x > maxPossible) {
+                        outOfRangeMessage = `No es posible obtener ${x} ${label}s porque en ${population} solo hay ${maxPossible}.`;
+                    } else {
+                        outOfRangeMessage = `No es posible obtener ${x} ${label}s al sacar ${n} porque necesitarías más ${successLabel}s de los disponibles.`;
+                    }
+                } else {
+                    if (x > k) {
+                        outOfRangeMessage = `No es posible obtener ${x} ${label}s porque en ${population} solo hay ${k}.`;
+                    } else if (x < range.min) {
+                        outOfRangeMessage = `No es posible obtener ${x} ${label}s al sacar ${n} porque necesitarías menos ${failureLabel}s de los disponibles.`;
+                    }
+                }
+                
+                alertBox.textContent = outOfRangeMessage;
+                alertBox.classList.add('show');
+            }
+
+            // Calcular distribución para el rango válido
+            const distribution = [];
+            for (let i = range.min; i <= range.max; i++) {
+                let prob;
+                if (isFailure) {
+                    // i es el número de no éxitos (Y = n - X)
+                    const numSuccess = n - i;
+                    prob = hypergeometric(N, n, k, numSuccess);
+                } else {
+                    prob = hypergeometric(N, n, k, i);
+                }
+                distribution.push({ x: i, probability: prob });
+            }
+
+            // Crear gráfica
+            createChart(distribution, x, isFailure, range, decimals);
+
+            // Crear tabla
+            createTable(distribution, x, isFailure, n, N, k, populationLabel, successLabel, failureLabel, range, decimals);
+
+            // Mostrar resultados
+            document.getElementById('resultsSection').classList.add('show');
+            document.getElementById('tableSection').classList.add('show');
+        }
+
+        // Crear gráfica con Chart.js
+        function createChart(distribution, selectedX, isFailure, range, decimals) {
+            const ctx = document.getElementById('chart').getContext('2d');
+            
+            if (chart) {
+                chart.destroy();
+            }
+
+            const labels = distribution.map(d => d.x);
+            const data = distribution.map(d => d.probability);
+            
+            // Si selectedX es null, undefined o vacío, no resaltar ninguna barra
+            const backgroundColors = labels.map(label => 
+                (selectedX !== null && selectedX !== undefined && selectedX !== '' && label === selectedX) ? '#c4453c' : '#5a7c65'
+            );
+
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Probabilidad',
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'P(X=' + context.label + ') = ' + context.parsed.y.toFixed(decimals);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'x',
+                                color: '#2c2c2c',
+                                font: {
+                                    size: 14,
+                                    family: "'Georgia', 'Times New Roman', serif"
+                                }
+                            },
+                            ticks: {
+                                color: '#5a5a5a'
+                            },
+                            grid: {
+                                color: '#e0e0d8'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Probabilidad',
+                                color: '#2c2c2c',
+                                font: {
+                                    size: 14,
+                                    family: "'Georgia', 'Times New Roman', serif"
+                                }
+                            },
+                            ticks: {
+                                color: '#5a5a5a'
+                            },
+                            grid: {
+                                color: '#e0e0d8'
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Crear tabla de resultados
+        function createTable(distribution, selectedX, isFailure, n, N, k, populationLabel, successLabel, failureLabel, range, decimals) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            distribution.forEach(item => {
+                const row = tbody.insertRow();
+                
+                // Solo resaltar si selectedX tiene un valor válido
+                if (selectedX !== null && selectedX !== undefined && selectedX !== '' && item.x === selectedX) {
+                    row.classList.add('highlight-row');
+                }
+
+                const cellFormula = row.insertCell(0);
+                const cellProb = row.insertCell(1);
+                const cellInterpretation = row.insertCell(2);
+
+                // Generar fórmula con datos reemplazados
+                let xValue, nMinusX;
+                if (isFailure) {
+                    // item.x representa no éxitos, así que éxitos = n - item.x
+                    xValue = n - item.x;
+                    nMinusX = item.x;
+                } else {
+                    xValue = item.x;
+                    nMinusX = n - item.x;
+                }
+
+                // Construir fórmula completa con simplificación cuando algún término es 0
+                let formula;
+                const CkX = combination(k, xValue);
+                const CNkNx = combination(N - k, nMinusX);
+                
+                if (xValue === 0 && nMinusX === 0) {
+                    // Ambos cero (caso n=0)
+                    formula = `P(X=${item.x}) = 1 / C(${N},${n})`;
+                } else if (xValue === 0) {
+                    // Solo el primer término es cero, se simplifica
+                    formula = `P(X=${item.x}) = C(${N-k},${nMinusX}) / C(${N},${n})`;
+                } else if (nMinusX === 0) {
+                    // Solo el segundo término es cero, se simplifica
+                    formula = `P(X=${item.x}) = C(${k},${xValue}) / C(${N},${n})`;
+                } else {
+                    // Fórmula completa
+                    formula = `P(X=${item.x}) = [C(${k},${xValue}) × C(${N-k},${nMinusX})] / C(${N},${n})`;
+                }
+
+                cellFormula.textContent = formula;
+                cellProb.textContent = item.probability.toFixed(decimals);
+
+                const label = isFailure ? failureLabel : successLabel;
+                const interpretation = `Probabilidad de obtener ${item.x} ${label}${item.x !== 1 ? 's' : ''} al sacar ${n} de ${populationLabel} es ${item.probability.toFixed(decimals)}.`;
+                cellInterpretation.textContent = interpretation;
+            });
+        }
+
+        // Capturar gráfica como imagen
+        function captureChart() {
+            if (chart) {
+                const link = document.createElement('a');
+                link.download = 'distribucion_hipergeometrica.png';
+                link.href = chart.toBase64Image();
+                link.click();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('calculateBtn').addEventListener('click', calculate);
+        document.getElementById('captureBtn').addEventListener('click', captureChart);
+
+        // Calcular automáticamente al cambiar el tipo
+        document.querySelectorAll('input[name="xType"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                if (document.getElementById('resultsSection').classList.contains('show')) {
+                    calculate();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

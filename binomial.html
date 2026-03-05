@@ -378,6 +378,147 @@
             color: var(--text-primary);
             border-left: 4px solid var(--accent-secondary);
         }
+
+        /* Tabs system */
+        .tabs-container {
+            margin-top: 1rem;
+        }
+
+        .tabs-header {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 1rem;
+        }
+
+        .tab-button {
+            padding: 0.7rem 1.5rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: none;
+            font-size: 0.9rem;
+        }
+
+        .tab-button:hover {
+            background: transparent;
+            color: var(--accent-primary);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tab-button.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Sexta Probabilidad */
+        .probability-calculator {
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .probability-input-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 500px) {
+            .probability-input-group {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .operator-select {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .operator-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--highlight);
+        }
+
+        .value-inputs {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .value-inputs input {
+            flex: 1;
+        }
+
+        .value-inputs span {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .probability-result {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: var(--highlight);
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-primary);
+        }
+
+        .probability-result h3 {
+            font-size: 1rem;
+            color: var(--accent-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-formula {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            margin: 0.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-top: 0.5rem;
+        }
+
+        .result-interpretation {
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .generate-btn {
+            width: 100%;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
@@ -461,19 +602,66 @@
                 </div>
 
                 <div class="card results-section" id="tableSection">
-                    <h2>Tabla de Probabilidades</h2>
-                    <div style="overflow-x: auto;">
-                        <table id="resultsTable">
-                            <thead>
-                                <tr>
-                                    <th>Fórmula</th>
-                                    <th>Probabilidad</th>
-                                    <th>Interpretación</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableBody">
-                            </tbody>
-                        </table>
+                    <h2>Análisis de Probabilidades</h2>
+
+                    <div class="tabs-container">
+                        <div class="tabs-header">
+                            <button class="tab-button active" data-tab="tabla">Tabla</button>
+                            <button class="tab-button" data-tab="sexta">Sexta Probabilidad</button>
+                        </div>
+                    
+                        <!-- Tab: Tabla -->
+                        <div class="tab-content active" id="tab-tabla">
+                            <div style="overflow-x: auto;">
+                                <table id="resultsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Fórmula</th>
+                                            <th>Probabilidad</th>
+                                            <th>Interpretación</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    
+                        <!-- Tab: Sexta Probabilidad -->
+                        <div class="tab-content" id="tab-sexta">
+                            <div class="probability-calculator">
+                                <div class="probability-input-group">
+                                    <div class="form-group">
+                                        <label for="operatorSelect">Tipo de Probabilidad</label>
+                                        <select id="operatorSelect" class="operator-select">
+                                            <option value="=">= (Exactamente)</option>
+                                            <option value="≥">≥ (Al menos)</option>
+                                            <option value="≤">≤ (Por lo mucho)</option>
+                                            <option value=">"> > (Más de)</option>
+                                            <option value="<"> < (Menos de)</option>
+                                            <option value="entre">Entre (Intervalo)</option>
+                                        </select>
+                                    </div>
+                                
+                                    <div class="form-group" id="valueInputsContainer">
+                                        <label for="xValue">Valor de X</label>
+                                        <div class="value-inputs" id="singleValueInput">
+                                            <input type="number" id="xValue" min="0" value="0">
+                                        </div>
+                                        <div class="value-inputs" id="rangeValueInput" style="display: none;">
+                                            <input type="number" id="xValue1" min="0" value="0">
+                                            <span>y</span>
+                                            <input type="number" id="xValue2" min="0" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                                <button class="generate-btn" id="generateProbBtn">Calcular Probabilidad</button>
+                            
+                                <div id="probabilityResult" style="display: none;">
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -483,6 +671,11 @@
     <script src="menu.js"></script>
     <script>
         let chart = null;
+
+        // Función para formatear números con decimales especificados, sin ceros innecesarios
+        function formatNumber(num, decimals) {
+            return parseFloat(num.toFixed(decimals)).toString();
+        }
 
         // Función para calcular combinación C(n, k)
         function combination(n, k) {
@@ -701,16 +894,18 @@
                 let formula;
                 const xValue = item.x;
                 const nMinusX = n - item.x;
+
+                const q = 1 - p;
                 
                 if (xValue === 0) {
                     // Simplificar cuando x = 0
-                    formula = `P(X=${displayValue}) = C(${n},0) × (1-${p})^${n}`;
+                    formula = `P(X=${displayValue}) = C(${n},0) × ${formatNumber(q, decimals)}^${n}`;
                 } else if (nMinusX === 0) {
                     // Simplificar cuando n-x = 0
                     formula = `P(X=${displayValue}) = C(${n},${n}) × ${p}^${n}`;
                 } else {
                     // Fórmula completa
-                    formula = `P(X=${displayValue}) = C(${n},${xValue}) × ${p}^${xValue} × (1-${p})^${nMinusX}`;
+                    formula = `P(X=${displayValue}) = C(${n},${xValue}) × ${p}^${xValue} × (${formatNumber(q, decimals)})^${nMinusX}`;
                 }
 
                 cellFormula.textContent = formula;
@@ -743,6 +938,117 @@
                     calculate();
                 }
             });
+        });
+
+        // Tabs functionality
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+
+                // Remove active class from all
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                // Add active class
+                button.classList.add('active');
+                document.getElementById(`tab-${tabName}`).classList.add('active');
+            });
+        });
+
+        // Operator select change
+        document.getElementById('operatorSelect').addEventListener('change', function() {
+            const singleInput = document.getElementById('singleValueInput');
+            const rangeInput = document.getElementById('rangeValueInput');
+
+            if (this.value === 'entre') {
+                singleInput.style.display = 'none';
+                rangeInput.style.display = 'flex';
+            } else {
+                singleInput.style.display = 'block';
+                rangeInput.style.display = 'none';
+            }
+        });
+
+        // Calculate sexta probabilidad
+        document.getElementById('generateProbBtn').addEventListener('click', function() {
+            const n = parseInt(document.getElementById('n').value);
+            const p = parseFloat(document.getElementById('p').value);
+            const operator = document.getElementById('operatorSelect').value;
+            const decimals = parseInt(document.getElementById('decimals').value) || 9;
+            const successLabel = document.getElementById('successLabel').value || "éxito";
+        
+            if (!n || !p) {
+                alert('Primero calcula la distribución');
+                return;
+            }
+        
+            let xVal, xVal1, xVal2, result, formula, interpretation;
+
+            if (operator === 'entre') {
+                xVal1 = parseInt(document.getElementById('xValue1').value);
+                xVal2 = parseInt(document.getElementById('xValue2').value);
+
+                if (xVal1 > xVal2) {
+                    alert('El primer valor debe ser menor o igual al segundo');
+                    return;
+                }
+
+                result = 0;
+                for (let i = xVal1; i <= xVal2; i++) {
+                    result += binomial(n, p, i);
+                }
+
+                formula = `P(${xVal1} ≤ X ≤ ${xVal2})`;
+                interpretation = `Probabilidad de obtener entre ${xVal1} y ${xVal2} ${successLabel}s en ${n} ensayos`;
+
+            } else {
+                xVal = parseInt(document.getElementById('xValue').value);
+
+                if (xVal < 0 || xVal > n) {
+                    alert(`El valor debe estar entre 0 y ${n}`);
+                    return;
+                }
+
+                switch(operator) {
+                    case '=':
+                        result = binomial(n, p, xVal);
+                        formula = `P(X = ${xVal})`;
+                        break;
+                    case '≥':
+                        result = 0;
+                        for (let i = xVal; i <= n; i++) result += binomial(n, p, i);
+                        formula = `P(X ≥ ${xVal})`;
+                        break;
+                    case '≤':
+                        result = 0;
+                        for (let i = 0; i <= xVal; i++) result += binomial(n, p, i);
+                        formula = `P(X ≤ ${xVal})`;
+                        break;
+                    case '>':
+                        result = 0;
+                        for (let i = xVal + 1; i <= n; i++) result += binomial(n, p, i);
+                        formula = `P(X > ${xVal})`;
+                        break;
+                    case '<':
+                        result = 0;
+                        for (let i = 0; i < xVal; i++) result += binomial(n, p, i);
+                        formula = `P(X < ${xVal})`;
+                        break;
+                }
+
+                const operatorText = {'=': 'exactamente', '≥': 'al menos', '≤': 'por lo mucho', '>': 'más de', '<': 'menos de'};
+                interpretation = `Probabilidad de obtener ${operatorText[operator]} ${xVal} ${successLabel}${xVal !== 1 ? 's' : ''} en ${n} ensayos`;
+            }
+        
+            const resultDiv = document.getElementById('probabilityResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'probability-result';
+            resultDiv.innerHTML = `
+                <h3>Resultado</h3>
+                <div class="result-formula">${formula}</div>
+                <div class="result-value">${result.toFixed(decimals)}</div>
+                <div class="result-interpretation">${interpretation}</div>
+            `;
         });
     </script>
 </body>

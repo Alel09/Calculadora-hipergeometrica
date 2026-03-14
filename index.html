@@ -519,6 +519,79 @@
             width: 100%;
             margin-top: 1rem;
         }
+
+        /* Estadísticos */
+        .statistics-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .statistic-card {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .statistic-card h3 {
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .formula-section,
+        .calculation-section,
+        .result-section {
+            margin-bottom: 1rem;
+        }
+
+        .formula-label,
+        .calculation-label,
+        .result-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .formula-text {
+            font-family: 'Courier New', monospace;
+            background: var(--highlight);
+            padding: 0.8rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .calculation-steps {
+            font-family: 'Courier New', monospace;
+            background: var(--bg-card);
+            padding: 0.8rem;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        .result-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: 'Courier New', monospace;
+        }
+
+        @media (min-width: 768px) {
+            .statistics-container {
+                gap: 2rem;
+            }
+
+            .statistic-card h3 {
+                font-size: 1.2rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -619,6 +692,7 @@
                         <div class="tabs-header">
                             <button class="tab-button active" data-tab="tabla">Tabla</button>
                             <button class="tab-button" data-tab="sexta">Sexta Probabilidad</button>
+                            <button class="tab-button" data-tab="estadisticos">Estadísticos</button>
                         </div>
                     
                         <!-- Tab: Tabla -->
@@ -670,6 +744,58 @@
                                 <button class="generate-btn" id="generateProbBtn">Calcular Probabilidad</button>
                             
                                 <div id="probabilityResult" style="display: none;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-content" id="tab-estadisticos">
+                            <div class="statistics-container">
+                                <div class="statistic-card">
+                                    <h3>Esperanza</h3>
+                                    <div class="formula-section">
+                                        <div class="formula-label">Fórmula:</div>
+                                        <div class="formula-text">E(X) = n × (k / N)</div>
+                                    </div>
+                                    <div class="calculation-section" id="esperanzaCalculo">
+                                        <div class="calculation-label">Cálculo:</div>
+                                        <div class="calculation-steps" id="esperanzaSteps"></div>
+                                    </div>
+                                    <div class="result-section">
+                                        <div class="result-label">Resultado:</div>
+                                        <div class="result-number" id="esperanzaResultado">-</div>
+                                    </div>
+                                </div>
+                            
+                                <div class="statistic-card">
+                                    <h3>Varianza</h3>
+                                    <div class="formula-section">
+                                        <div class="formula-label">Fórmula:</div>
+                                        <div class="formula-text">Var(X) = n × (k/N) × (N - k)/N × (N - n)/(N - 1)</div>
+                                    </div>
+                                    <div class="calculation-section" id="varianzaCalculo">
+                                        <div class="calculation-label">Cálculo:</div>
+                                        <div class="calculation-steps" id="varianzaSteps"></div>
+                                    </div>
+                                    <div class="result-section">
+                                        <div class="result-label">Resultado:</div>
+                                        <div class="result-number" id="varianzaResultado">-</div>
+                                    </div>
+                                </div>
+                            
+                                <div class="statistic-card">
+                                    <h3>Desviación Estándar</h3>
+                                    <div class="formula-section">
+                                        <div class="formula-label">Fórmula:</div>
+                                        <div class="formula-text">σ(X) = √Var(X)</div>
+                                    </div>
+                                    <div class="calculation-section">
+                                        <div class="calculation-label">Cálculo:</div>
+                                        <div class="calculation-steps" id="desviacionSteps"></div>
+                                    </div>
+                                    <div class="result-section">
+                                        <div class="result-label">Resultado:</div>
+                                        <div class="result-number" id="desviacionResultado">-</div>
+                                    </div>
+                                </div>
                                 </div>
                             </div>
                         </div>
@@ -834,6 +960,9 @@
             // Crear tabla
             createTable(distribution, x, isFailure, n, N, k, populationLabel, successLabel, failureLabel, range, decimals);
 
+            // Calcular estadísticos
+            calculateStatistics(N, n, k, decimals);
+
             // Mostrar resultados
             document.getElementById('resultsSection').classList.add('show');
             document.getElementById('tableSection').classList.add('show');
@@ -987,6 +1116,33 @@
                 link.href = chart.toBase64Image();
                 link.click();
             }
+        }
+
+        // Calcular y mostrar estadísticos
+        function calculateStatistics(N, n, k, decimals) {
+            // Esperanza
+            const esperanza = (n * k) / N;
+            document.getElementById('esperanzaSteps').textContent = 
+                `E(X) = ${n} × (${k} / ${N}) = ${(n * k)} / ${N}`;
+            document.getElementById('esperanzaResultado').textContent = esperanza.toFixed(decimals);
+
+            // Varianza
+            const kN = k / N;
+            const NmK_N = (N - k) / N;
+            const factor = (N - n) / (N - 1);
+            const varianza = n * kN * NmK_N * factor;
+
+            const varianzaSteps = `Var(X) = ${n} × (${k}/${N}) × [(${N} - ${k})/${N}] × [(${N} - ${n})/(${N} - 1)]
+        Var(X) = ${n} × ${kN.toFixed(4)} × ${NmK_N.toFixed(4)} × ${factor.toFixed(4)}`;
+
+            document.getElementById('varianzaSteps').textContent = varianzaSteps;
+            document.getElementById('varianzaResultado').textContent = varianza.toFixed(decimals);
+
+            // Desviación estándar
+            const desviacion = Math.sqrt(varianza);
+            document.getElementById('desviacionSteps').textContent = 
+                `σ(X) = √${varianza.toFixed(decimals)}`;
+            document.getElementById('desviacionResultado').textContent = desviacion.toFixed(decimals);
         }
 
         // Event listeners

@@ -353,6 +353,27 @@
             #resultsTable td {
                 padding: 0.8rem 1rem;
             }
+
+            .tabs-header {
+                overflow: visible; /* ya no hay scroll */
+            }
+        
+            .tabs-header::-webkit-scrollbar {
+                display: none; /* oculta el scrollbar */
+            }
+
+            .tab-button {
+                padding: 0.7rem 1.5rem;
+                background: transparent;
+                color: var(--text-secondary);
+                border: none;
+                border-bottom: 3px solid transparent;
+                cursor: pointer;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                box-shadow: none;
+                font-size: 0.9rem;
+            }
         }
 
         .input-small {
@@ -389,6 +410,25 @@
             gap: 0.5rem;
             border-bottom: 2px solid var(--border);
             margin-bottom: 1rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) var(--border);
+        }
+
+        .tabs-header::webkit-scrollbar {
+            height: 4px;
+        }
+
+        .tabs-header::-webkit-scrollbar-track {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .tabs-header::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 2px;
         }
 
         .tab-button {
@@ -402,6 +442,8 @@
             transition: all 0.2s ease;
             box-shadow: none;
             font-size: 0.9rem;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .tab-button:hover {

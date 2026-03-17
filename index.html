@@ -353,27 +353,6 @@
             #resultsTable td {
                 padding: 0.8rem 1rem;
             }
-
-            .tabs-header {
-                overflow: visible; /* ya no hay scroll */
-            }
-        
-            .tabs-header::-webkit-scrollbar {
-                display: none; /* oculta el scrollbar */
-            }
-
-            .tab-button {
-                padding: 0.7rem 1.5rem;
-                background: transparent;
-                color: var(--text-secondary);
-                border: none;
-                border-bottom: 3px solid transparent;
-                cursor: pointer;
-                font-weight: 500;
-                transition: all 0.2s ease;
-                box-shadow: none;
-                font-size: 0.9rem;
-            }
         }
 
         .input-small {
@@ -432,7 +411,7 @@
         }
 
         .tab-button {
-            padding: 0.7rem 1.5rem;
+            padding: 0.7rem 1rem;
             background: transparent;
             color: var(--text-secondary);
             border: none;
@@ -441,9 +420,16 @@
             font-weight: 500;
             transition: all 0.2s ease;
             box-shadow: none;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             white-space: nowrap;
             flex-shrink: 0;
+        }
+
+        @media (min-width:768px) {
+            .tab-button{
+                font-size: 0.9rem;
+                padding: 0.7rem 1.5rem;
+            }
         }
 
         .tab-button:hover {

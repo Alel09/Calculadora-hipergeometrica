@@ -410,7 +410,7 @@
         }
 
         .tab-button {
-            padding: 0.7rem 1.5rem;
+            padding: 0.7rem 1rem;
             background: transparent;
             color: var(--text-secondary);
             border: none;
@@ -419,9 +419,16 @@
             font-weight: 500;
             transition: all 0.2s ease;
             box-shadow: none;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             white-space: nowrap;
             flex-shrink: 0;
+        }
+
+        @media (min-width:768px) {
+            .tab-button{
+                font-size: 0.9rem;
+                padding: 0.7rem 1.5rem;
+            }
         }
 
         .tab-button:hover {

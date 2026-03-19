@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Distribución Normal</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #b4b4b4;
+            --bg-secondary: #ffffff;
+            --bg-card: #ddf0e5;
+            --accent-primary: #00774f;
+            --accent-secondary: #5a7c65;
+            --text-primary: #2c2c2c;
+            --text-secondary: #5a5a5a;
+            --error: #bd2116;
+            --success: #178d5c;
+            --border: #d4d4c8;
+            --highlight: #e8f0eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            letter-spacing: 0px;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            font-style: italic;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            color: var(--accent-primary);
+            margin-bottom: 1.25rem;
+            letter-spacing: 0px;
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            letter-spacing: 0px;
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--highlight);
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: var(--accent-secondary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #captureBtn {
+            background: var(--success);
+        }
+
+        #captureBtn:hover {
+            background: #2f6239;
+        }
+
+        .alert {
+            padding: 1rem;
+            background: #fef5f5;
+            border: 1px solid var(--error);
+            border-left: 4px solid var(--error);
+            border-radius: 4px;
+            color: var(--error);
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #chartContainer {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        #resultsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+
+        #resultsTable th {
+            background: var(--bg-secondary);
+            padding: 0.75rem 0.5rem;
+            text-align: left;
+            color: var(--accent-primary);
+            font-size: 0.8rem;
+            letter-spacing: 0px;
+            border-bottom: 2px solid var(--accent-primary);
+            font-weight: 600;
+        }
+
+        #resultsTable td {
+            padding: 0.6rem 0.5rem;
+            border-bottom: 1px solid var(--border);
+            word-break: break-word;
+        }
+
+        #resultsTable tr:hover {
+            background: var(--highlight);
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 2rem;
+            }
+
+            header {
+                margin-bottom: 3rem;
+                padding: 2rem 0;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+                letter-spacing: 0px;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+                letter-spacing: 0.5px;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr 1.5fr;
+                gap: 2rem;
+            }
+
+            .card {
+                padding: 2rem;
+            }
+
+            .card h2 {
+                font-size: 1.3rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+
+            label {
+                font-size: 0.9rem;
+                letter-spacing: 0px;
+            }
+
+            input[type="number"],
+            input[type="text"] {
+                padding: 0.8rem;
+                font-size: 1rem;
+            }
+
+            .button-group {
+                flex-direction: row;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+
+            button {
+                padding: 1rem 2rem;
+                font-size: 1rem;
+            }
+
+            #chartContainer {
+                height: 400px;
+                margin-bottom: 2rem;
+            }
+
+            #resultsTable {
+                font-size: 1rem;
+            }
+
+            #resultsTable th {
+                padding: 1rem;
+                font-size: 0.85rem;
+                letter-spacing: 0px;
+            }
+
+            #resultsTable td {
+                padding: 0.8rem 1rem;
+            }
+        }
+
+        .input-small {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0rem;
+        }
+
+        @media (min-width: 500px) {
+            .input-small {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        .formula-box {
+            background: var(--highlight);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            border-left: 4px solid var(--accent-secondary);
+        }
+
+        /* Tabs system */
+        .tabs-container {
+            margin-top: 1rem;
+            width: 100%;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        #tableSection {
+            min-width: 0;
+        }
+
+        .main-grid > div:last-child {
+            min-width: 0;
+        }
+
+        .tabs-header {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-primary) var(--border);
+            width: 100%;
+        }
+
+        .tabs-header::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .tabs-header::-webkit-scrollbar-track {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .tabs-header::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 2px;
+        }
+
+        .tab-button {
+            padding: 0.7rem 1rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: none;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+            width: auto;
+            min-width: auto;
+        }
+
+        @media (min-width:768px) {
+            .tab-button{
+                font-size: 0.9rem;
+                padding: 0.7rem 1.5rem;
+            }
+        }
+
+        .tab-button:hover {
+            background: transparent;
+            color: var(--accent-primary);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .tab-button.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Probabilidades */
+        .probability-calculator {
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .probability-input-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 500px) {
+            .probability-input-group {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .operator-select {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .operator-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--highlight);
+        }
+
+        .value-inputs {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .value-inputs input {
+            flex: 1;
+        }
+
+        .value-inputs span {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .probability-result {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: var(--highlight);
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-primary);
+        }
+
+        .probability-result h3 {
+            font-size: 1rem;
+            color: var(--accent-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .result-formula {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            margin: 0.5rem 0;
+            color: var(--text-primary);
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-top: 0.5rem;
+        }
+
+        .result-interpretation {
+            margin-top: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .generate-btn {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        /* Estadísticos */
+        .statistics-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .statistic-card {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .statistic-card h3 {
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .formula-section,
+        .calculation-section,
+        .result-section {
+            margin-bottom: 1rem;
+        }
+
+        .formula-label,
+        .calculation-label,
+        .result-label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .formula-text {
+            font-family: 'Courier New', monospace;
+            background: var(--highlight);
+            padding: 0.8rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .calculation-steps {
+            font-family: 'Courier New', monospace;
+            background: var(--bg-card);
+            padding: 0.8rem;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            line-height: 1.8;
+        }
+
+        .result-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: 'Courier New', monospace;
+        }
+
+        @media (min-width: 768px) {
+            .statistics-container {
+                gap: 2rem;
+            }
+
+            .statistic-card h3 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Distribución Normal</h1>
+            <p class="subtitle">Calculadora Interactiva</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Panel de entrada -->
+            <div class="card">
+                <h2>Parámetros</h2>
+                
+                <div class="alert" id="alertBox"></div>
+
+                <div class="form-group input-small">
+                    <div>
+                        <label for="mu">μ (Media)</label>
+                        <input type="number" id="mu" step="0.01" value="0">
+                    </div>
+                    <div>
+                        <label for="sigma">σ (Desviación estándar)</label>
+                        <input type="number" id="sigma" min="0.01" step="0.01" value="1">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="x">x (Valor específico - Opcional)</label>
+                    <input type="number" id="x" step="0.01" placeholder="Opcional">
+                </div>
+
+                <div class="form-group">
+                    <label for="decimals">Decimales a Mostrar</label>
+                    <input type="number" id="decimals" min="0" max="15" value="4">
+                </div>
+
+                <div class="button-group">
+                    <button id="calculateBtn">Calcular</button>
+                    <button id="captureBtn">Capturar</button>
+                </div>
+
+                <div class="formula-box">
+                    <strong>Función de densidad (PDF):</strong><br>
+                    f(x) = (1 / σ√(2π)) × e^(-(x-μ)²/(2σ²))
+                    <br><br>
+                    <strong>Estandarización:</strong><br>
+                    Z = (X - μ) / σ
+                    <br><br>
+                    <strong>Probabilidad acumulada (CDF):</strong><br>
+                    P(X ≤ x) = Φ(Z)
+                </div>
+            </div>
+
+            <!-- Panel de resultados -->
+            <div>
+                <div class="card results-section" id="resultsSection">
+                    <h2>Curva Normal</h2>
+                    
+                    <div id="chartContainer">
+                        <canvas id="chart"></canvas>
+                    </div>
+
+                    <!-- Info card cuando x tiene valor -->
+                    <div id="xInfoCard" style="display: none; background: var(--highlight); padding: 1rem; border-radius: 6px; border-left: 4px solid var(--accent-primary); margin-top: 1rem;">
+                        <h3 style="font-size: 1rem; color: var(--accent-primary); margin-bottom: 0.5rem;">Valor X = <span id="xValueDisplay"></span></h3>
+                        <div style="font-family: 'Courier New', monospace; font-size: 0.9rem; line-height: 1.8;">
+                            <div><strong>Valor Z:</strong> <span id="zValueDisplay"></span></div>
+                            <div><strong>P(X ≤ x):</strong> <span id="pValueDisplay"></span></div>
+                            <div><strong>P(X > x):</strong> <span id="pComplementDisplay"></span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card results-section" id="tableSection">
+                    <h2>Análisis de Probabilidades</h2>
+
+                    <div class="tabs-container">
+                        <div class="tabs-header">
+                            <button class="tab-button active" data-tab="tabla">Valores Z</button>
+                            <button class="tab-button" data-tab="probabilidades">Probabilidades</button>
+                            <button class="tab-button" data-tab="estadisticos">Estadísticos</button>
+                        </div>
+                    
+                        <!-- Tab: Tabla de valores Z -->
+                        <div class="tab-content active" id="tab-tabla">
+                            <div style="overflow-x: auto;">
+                                <table id="resultsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Valor Z</th>
+                                            <th>Fórmula</th>
+                                            <th>Valor X</th>
+                                            <th>P(X ≤ x)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    
+                        <!-- Tab: Probabilidades -->
+                        <div class="tab-content" id="tab-probabilidades">
+                            <div class="probability-calculator">
+                                <div class="probability-input-group">
+                                    <div class="form-group">
+                                        <label for="operatorSelect">Tipo de Probabilidad</label>
+                                        <select id="operatorSelect" class="operator-select">
+                                            <option value="≤">≤ (Menor o igual que)</option>
+                                            <option value="≥">≥ (Mayor o igual que)</option>
+                                            <option value=">"> > (Mayor que)</option>
+                                            <option value="<"> < (Menor que)</option>
+                                            <option value="entre">Entre (Intervalo)</option>
+                                        </select>
+                                    </div>
+                                
+                                    <div class="form-group" id="valueInputsContainer">
+                                        <label for="xValue">Valor de X</label>
+                                        <div class="value-inputs" id="singleValueInput">
+                                            <input type="number" id="xValue" step="0.01" value="0">
+                                        </div>
+                                        <div class="value-inputs" id="rangeValueInput" style="display: none;">
+                                            <input type="number" id="xValue1" step="0.01" value="0">
+                                            <span>y</span>
+                                            <input type="number" id="xValue2" step="0.01" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            
+                                <button class="generate-btn" id="generateProbBtn">Calcular Probabilidad</button>
+                            
+                                <div id="probabilityResult" style="display: none;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab: Estadísticos -->
+                        <div class="tab-content" id="tab-estadisticos">
+                            <div class="statistics-container">
+                                <div class="statistic-card">
+                                    <h3>Media (Esperanza)</h3>
+                                    <div class="formula-section">
+                                        <div class="formula-label">Fórmula:</div>
+                                        <div class="formula-text">E(X) = μ</div>
+                                    </div>
+                                    <div class="result-section">
+                                        <div class="result-label">Resultado:</div>
+                                        <div class="result-number" id="esperanzaResultado">-</div>
+                                    </div>
+                                </div>
+                            
+                                <div class="statistic-card">
+                                    <h3>Varianza</h3>
+                                    <div class="formula-section">
+                                        <div class="formula-label">Fórmula:</div>
+                                        <div class="formula-text">Var(X) = σ²</div>
+                                    </div>
+                                    <div class="result-section">
+                                        <div class="result-label">Resultado:</div>
+                                        <div class="result-number" id="varianzaResultado">-</div>
+                                    </div>
+                                </div>
+                            
+                                <div class="statistic-card">
+                                    <h3>Desviación Estándar</h3>
+                                    <div class="formula-section">
+                                        <div class="formula-label">Fórmula:</div>
+                                        <div class="formula-text">σ(X) = σ</div>
+                                    </div>
+                                    <div class="result-section">
+                                        <div class="result-label">Resultado:</div>
+                                        <div class="result-number" id="desviacionResultado">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="menu.js"></script>
+    <script>
+        let chart = null;
+
+        // Función de error (aproximación numérica)
+        function erf(x) {
+            const sign = x >= 0 ? 1 : -1;
+            x = Math.abs(x);
+            
+            const a1 = 0.254829592;
+            const a2 = -0.284496736;
+            const a3 = 1.421413741;
+            const a4 = -1.453152027;
+            const a5 = 1.061405429;
+            const p = 0.3275911;
+            
+            const t = 1 / (1 + p * x);
+            const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+            
+            return sign * y;
+        }
+
+        // Función de densidad de probabilidad (PDF)
+        function normalPDF(x, mu, sigma) {
+            const coef = 1 / (sigma * Math.sqrt(2 * Math.PI));
+            const exponent = -0.5 * Math.pow((x - mu) / sigma, 2);
+            return coef * Math.exp(exponent);
+        }
+
+        // Función de distribución acumulada (CDF)
+        function normalCDF(x, mu, sigma) {
+            const z = (x - mu) / sigma;
+            return 0.5 * (1 + erf(z / Math.sqrt(2)));
+        }
+
+        // Validar entradas
+        function validateInputs(mu, sigma) {
+            const errors = [];
+
+            if (isNaN(mu)) {
+                errors.push("La media (μ) debe ser un número válido");
+            }
+
+            if (sigma <= 0) {
+                errors.push("La desviación estándar (σ) debe ser mayor que 0");
+            }
+
+            if (isNaN(sigma)) {
+                errors.push("La desviación estándar (σ) debe ser un número válido");
+            }
+
+            return errors;
+        }
+
+        // Función principal de cálculo
+        function calculate() {
+            const mu = parseFloat(document.getElementById('mu').value);
+            const sigma = parseFloat(document.getElementById('sigma').value);
+            const xInput = document.getElementById('x').value;
+            const x = xInput === '' ? null : parseFloat(xInput);
+            const decimals = parseInt(document.getElementById('decimals').value) || 4;
+
+            const alertBox = document.getElementById('alertBox');
+            alertBox.classList.remove('show');
+
+            // Validar entradas
+            const errors = validateInputs(mu, sigma);
+            if (errors.length > 0) {
+                alertBox.textContent = errors.join('. ');
+                alertBox.classList.add('show');
+                return;
+            }
+
+            // Crear gráfica
+            createChart(mu, sigma, x, decimals);
+
+            // Crear tabla de valores Z
+            createTable(mu, sigma, decimals);
+
+            // Mostrar estadísticos
+            calculateStatistics(mu, sigma, decimals);
+
+            // Mostrar info de x si está presente
+            if (x !== null && !isNaN(x)) {
+                showXInfo(x, mu, sigma, decimals);
+            } else {
+                document.getElementById('xInfoCard').style.display = 'none';
+            }
+
+            // Mostrar resultados
+            document.getElementById('resultsSection').classList.add('show');
+            document.getElementById('tableSection').classList.add('show');
+        }
+
+        // Crear gráfica con Chart.js
+        function createChart(mu, sigma, selectedX, decimals, shadingConfig = null) {
+            const ctx = document.getElementById('chart').getContext('2d');
+            
+            if (chart) {
+                chart.destroy();
+            }
+
+            // Generar puntos para la curva (μ ± 4σ)
+            const start = mu - 4 * sigma;
+            const end = mu + 4 * sigma;
+            const step = (end - start) / 200;
+
+            const allPoints = [];
+            for (let x = start; x <= end; x += step) {
+                allPoints.push({
+                    x: x,
+                    y: normalPDF(x, mu, sigma)
+                });
+            }
+
+            const datasets = [];
+
+            // Si hay configuración de sombreado (desde probabilidades)
+            if (shadingConfig) {
+                const { operator, value1, value2 } = shadingConfig;
+                
+                // Curva base sin relleno
+                datasets.push({
+                    label: 'Distribución Normal',
+                    data: allPoints,
+                    borderColor: '#5a7c65',
+                    backgroundColor: 'rgba(90, 124, 101, 0.05)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 0
+                });
+
+                // Área sombreada según operador
+                let shadedPoints = [];
+                let shadedColor = 'rgba(196, 69, 60, 0.3)'; // Rojo translúcido
+
+                switch(operator) {
+                    case '≤':
+                    case '<':
+                        shadedPoints = allPoints.filter(p => p.x <= value1);
+                        break;
+                    case '≥':
+                    case '>':
+                        shadedPoints = allPoints.filter(p => p.x >= value1);
+                        break;
+                    case 'entre':
+                        shadedPoints = allPoints.filter(p => p.x >= value1 && p.x <= value2);
+                        break;
+                }
+
+                if (shadedPoints.length > 0) {
+                    // Agregar puntos en el eje X para cerrar el área
+                    const shadedData = [...shadedPoints];
+                    if (operator === 'entre') {
+                        shadedData.unshift({ x: value1, y: 0 });
+                        shadedData.push({ x: value2, y: 0 });
+                    } else if (operator === '≤' || operator === '<') {
+                        shadedData.unshift({ x: shadedData[0].x, y: 0 });
+                        shadedData.push({ x: value1, y: 0 });
+                    } else {
+                        shadedData.unshift({ x: value1, y: 0 });
+                        shadedData.push({ x: shadedData[shadedData.length - 1].x, y: 0 });
+                    }
+
+                    datasets.push({
+                        label: 'Área de probabilidad',
+                        data: shadedData,
+                        borderColor: '#c4453c',
+                        backgroundColor: shadedColor,
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 0,
+                        pointRadius: 0
+                    });
+                }
+
+                // Líneas verticales
+                const maxY = Math.max(...allPoints.map(p => p.y));
+                
+                if (value1 !== null && value1 !== undefined) {
+                    datasets.push({
+                        label: `x = ${value1.toFixed(2)}`,
+                        data: [
+                            { x: value1, y: 0 },
+                            { x: value1, y: normalPDF(value1, mu, sigma) }
+                        ],
+                        borderColor: '#c4453c',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: false
+                    });
+                }
+
+                if (operator === 'entre' && value2 !== null && value2 !== undefined) {
+                    datasets.push({
+                        label: `x = ${value2.toFixed(2)}`,
+                        data: [
+                            { x: value2, y: 0 },
+                            { x: value2, y: normalPDF(value2, mu, sigma) }
+                        ],
+                        borderColor: '#c4453c',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: false
+                    });
+                }
+
+            } else {
+                // Curva normal sin sombreado especial
+                datasets.push({
+                    label: 'Densidad de probabilidad',
+                    data: allPoints,
+                    borderColor: '#5a7c65',
+                    backgroundColor: 'rgba(90, 124, 101, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    borderWidth: 2,
+                    pointRadius: 0
+                });
+
+                // Si hay un x seleccionado, agregar línea vertical y punto
+                if (selectedX !== null && !isNaN(selectedX)) {
+                    // Línea vertical
+                    datasets.push({
+                        label: 'Línea de referencia',
+                        data: [
+                            { x: selectedX, y: 0 },
+                            { x: selectedX, y: normalPDF(selectedX, mu, sigma) }
+                        ],
+                        borderColor: '#c4453c',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        showLine: true,
+                        fill: false
+                    });
+
+                    // Punto destacado
+                    datasets.push({
+                        label: `x = ${selectedX.toFixed(decimals)}`,
+                        data: [{
+                            x: selectedX,
+                            y: normalPDF(selectedX, mu, sigma)
+                        }],
+                        pointRadius: 8,
+                        pointBackgroundColor: '#c4453c',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        showLine: false
+                    });
+                }
+            }
+
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: { datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.dataset.label && context.dataset.label.startsWith('x =')) {
+                                        return context.dataset.label;
+                                    }
+                                    return 'f(x) = ' + context.parsed.y.toFixed(decimals + 2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            title: {
+                                display: true,
+                                text: 'x',
+                                color: '#2c2c2c',
+                                font: {
+                                    size: 14,
+                                    family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto"
+                                }
+                            },
+                            ticks: {
+                                color: '#5a5a5a',
+                                callback: function(value) {
+                                    return value.toFixed(2);
+                                }
+                            },
+                            grid: {
+                                color: '#e0e0d8'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Densidad f(x)',
+                                color: '#2c2c2c',
+                                font: {
+                                    size: 14,
+                                    family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto"
+                                }
+                            },
+                            ticks: {
+                                color: '#5a5a5a'
+                            },
+                            grid: {
+                                color: '#e0e0d8'
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Crear tabla de valores Z estándar
+        function createTable(mu, sigma, decimals) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            // Valores Z típicos: -3, -2, -1, 0, 1, 2, 3
+            const zValues = [-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3];
+
+            zValues.forEach(z => {
+                const row = tbody.insertRow();
+                const x = mu + z * sigma;
+                const prob = normalCDF(x, mu, sigma);
+
+                const cellZ = row.insertCell(0);
+                const cellFormula = row.insertCell(1);
+                const cellX = row.insertCell(2);
+                const cellProb = row.insertCell(3);
+
+                cellZ.textContent = z.toFixed(1);
+                
+                // Mostrar la fórmula de conversión
+                if (z >= 0) {
+                    cellFormula.textContent = `X = ${mu} + ${z.toFixed(1)} × ${sigma}`;
+                } else {
+                    cellFormula.textContent = `X = ${mu} - ${Math.abs(z).toFixed(1)} × ${sigma}`;
+                }
+                
+                cellX.textContent = x.toFixed(decimals);
+                cellProb.textContent = prob.toFixed(decimals);
+            });
+        }
+
+        // Mostrar información del valor x
+        function showXInfo(x, mu, sigma, decimals) {
+            const z = (x - mu) / sigma;
+            const pLessOrEqual = normalCDF(x, mu, sigma);
+            const pGreater = 1 - pLessOrEqual;
+
+            document.getElementById('xValueDisplay').textContent = x.toFixed(decimals);
+            document.getElementById('zValueDisplay').textContent = z.toFixed(decimals);
+            document.getElementById('pValueDisplay').textContent = pLessOrEqual.toFixed(decimals);
+            document.getElementById('pComplementDisplay').textContent = pGreater.toFixed(decimals);
+            
+            document.getElementById('xInfoCard').style.display = 'block';
+        }
+
+        // Capturar gráfica como imagen
+        function captureChart() {
+            if (chart) {
+                const link = document.createElement('a');
+                link.download = 'distribucion_normal.png';
+                link.href = chart.toBase64Image();
+                link.click();
+            }
+        }
+
+        // Calcular y mostrar estadísticos
+        function calculateStatistics(mu, sigma, decimals) {
+            // Media
+            document.getElementById('esperanzaResultado').textContent = mu.toFixed(decimals);
+            
+            // Varianza
+            const varianza = sigma * sigma;
+            document.getElementById('varianzaResultado').textContent = varianza.toFixed(decimals);
+            
+            // Desviación estándar
+            document.getElementById('desviacionResultado').textContent = sigma.toFixed(decimals);
+        }
+
+        // Event listeners
+        document.getElementById('calculateBtn').addEventListener('click', calculate);
+        document.getElementById('captureBtn').addEventListener('click', captureChart);
+
+        // Tabs functionality
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+
+                // Remove active class from all
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+                // Add active class
+                button.classList.add('active');
+                document.getElementById(`tab-${tabName}`).classList.add('active');
+            });
+        });
+
+        // Operator select change
+        document.getElementById('operatorSelect').addEventListener('change', function() {
+            const singleInput = document.getElementById('singleValueInput');
+            const rangeInput = document.getElementById('rangeValueInput');
+
+            if (this.value === 'entre') {
+                singleInput.style.display = 'none';
+                rangeInput.style.display = 'flex';
+            } else {
+                singleInput.style.display = 'block';
+                rangeInput.style.display = 'none';
+            }
+        });
+
+        // Calculate probabilidad
+        document.getElementById('generateProbBtn').addEventListener('click', function() {
+            const mu = parseFloat(document.getElementById('mu').value);
+            const sigma = parseFloat(document.getElementById('sigma').value);
+            const operator = document.getElementById('operatorSelect').value;
+            const decimals = parseInt(document.getElementById('decimals').value) || 4;
+
+            if (!mu && mu !== 0 || !sigma) {
+                alert('Primero calcula la distribución');
+                return;
+            }
+
+            let xVal, xVal1, xVal2, result, formula, interpretation;
+
+            if (operator === 'entre') {
+                xVal1 = parseFloat(document.getElementById('xValue1').value);
+                xVal2 = parseFloat(document.getElementById('xValue2').value);
+
+                if (xVal1 > xVal2) {
+                    alert('El primer valor debe ser menor o igual al segundo');
+                    return;
+                }
+
+                result = normalCDF(xVal2, mu, sigma) - normalCDF(xVal1, mu, sigma);
+                formula = `P(${xVal1.toFixed(2)} ≤ X ≤ ${xVal2.toFixed(2)})`;
+                interpretation = `Probabilidad de que X esté entre ${xVal1.toFixed(2)} y ${xVal2.toFixed(2)}`;
+
+                // Actualizar gráfica con área sombreada
+                createChart(mu, sigma, null, decimals, {
+                    operator: 'entre',
+                    value1: xVal1,
+                    value2: xVal2
+                });
+
+            } else {
+                xVal = parseFloat(document.getElementById('xValue').value);
+
+                switch(operator) {
+                    case '≤':
+                        result = normalCDF(xVal, mu, sigma);
+                        formula = `P(X ≤ ${xVal.toFixed(2)})`;
+                        interpretation = `Probabilidad de que X sea menor o igual a ${xVal.toFixed(2)}`;
+                        break;
+                    case '≥':
+                        result = 1 - normalCDF(xVal, mu, sigma);
+                        formula = `P(X ≥ ${xVal.toFixed(2)})`;
+                        interpretation = `Probabilidad de que X sea mayor o igual a ${xVal.toFixed(2)}`;
+                        break;
+                    case '>':
+                        result = 1 - normalCDF(xVal, mu, sigma);
+                        formula = `P(X > ${xVal.toFixed(2)})`;
+                        interpretation = `Probabilidad de que X sea mayor que ${xVal.toFixed(2)}`;
+                        break;
+                    case '<':
+                        result = normalCDF(xVal, mu, sigma);
+                        formula = `P(X < ${xVal.toFixed(2)})`;
+                        interpretation = `Probabilidad de que X sea menor que ${xVal.toFixed(2)}`;
+                        break;
+                }
+
+                // Actualizar gráfica con área sombreada
+                createChart(mu, sigma, null, decimals, {
+                    operator: operator,
+                    value1: xVal,
+                    value2: null
+                });
+            }
+
+            const resultDiv = document.getElementById('probabilityResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'probability-result';
+            
+            // Construir explicación de la fórmula
+            let formulaExplanation = '';
+            if (operator === 'entre') {
+                const z1 = ((xVal1 - mu) / sigma).toFixed(2);
+                const z2 = ((xVal2 - mu) / sigma).toFixed(2);
+                formulaExplanation = `
+                    <div style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                        Z₁ = (${xVal1.toFixed(2)} - ${mu}) / ${sigma} = ${z1}<br>
+                        Z₂ = (${xVal2.toFixed(2)} - ${mu}) / ${sigma} = ${z2}<br>
+                        P = Φ(Z₂) - Φ(Z₁)
+                    </div>
+                `;
+            } else {
+                const z = ((xVal - mu) / sigma).toFixed(2);
+                let formulaText = '';
+                switch(operator) {
+                    case '≤':
+                    case '<':
+                        formulaText = 'P = Φ(Z)';
+                        break;
+                    case '≥':
+                    case '>':
+                        formulaText = 'P = 1 - Φ(Z)';
+                        break;
+                }
+                formulaExplanation = `
+                    <div style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--text-secondary);">
+                        Z = (${xVal.toFixed(2)} - ${mu}) / ${sigma} = ${z}<br>
+                        ${formulaText}
+                    </div>
+                `;
+            }
+            
+            resultDiv.innerHTML = `
+                <h3>Resultado</h3>
+                <div class="result-formula">${formula}</div>
+                <div class="result-value">${result.toFixed(decimals)}</div>
+                <div class="result-interpretation">${interpretation}</div>
+                ${formulaExplanation}
+            `;
+        });
+
+        // Calcular automáticamente al cargar
+        calculate();
+    </script>
+</body>
+</html>

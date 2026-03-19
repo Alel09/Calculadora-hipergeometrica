@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Valor Esperado</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #b4b4b4;
+            --bg-secondary: #ffffff;
+            --bg-card: #ddf0e5;
+            --accent-primary: #00774f;
+            --accent-secondary: #5a7c65;
+            --text-primary: #2c2c2c;
+            --text-secondary: #5a5a5a;
+            --error: #bd2116;
+            --success: #178d5c;
+            --border: #d4d4c8;
+            --highlight: #e8f0eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            letter-spacing: 0px;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            font-style: italic;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            color: var(--accent-primary);
+            margin-bottom: 1.25rem;
+            letter-spacing: 0px;
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            letter-spacing: 0px;
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="number"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--highlight);
+        }
+
+        input[type="number"]:disabled,
+        input[type="text"]:disabled {
+            background: #e8e8e8;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-primary);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: var(--accent-secondary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #4a4a4a;
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #2f6239;
+        }
+
+        .alert {
+            padding: 1rem;
+            background: #fef5f5;
+            border: 1px solid var(--error);
+            border-left: 4px solid var(--error);
+            border-radius: 4px;
+            color: var(--error);
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .event-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .event-card h3 {
+            color: var(--accent-primary);
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .event-card .net-value {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            background: var(--highlight);
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+
+        .net-value.positive {
+            color: var(--success);
+        }
+
+        .net-value.negative {
+            color: var(--error);
+        }
+
+        #chartContainer {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1.5rem;
+        }
+
+        #resultsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+
+        #resultsTable th {
+            background: var(--bg-secondary);
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            color: var(--accent-primary);
+            font-size: 0.8rem;
+            letter-spacing: 0px;
+            border: 1px solid var(--border);
+            font-weight: 600;
+        }
+
+        #resultsTable td {
+            padding: 0.6rem 0.5rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        #resultsTable tr:hover {
+            background: var(--highlight);
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 2rem;
+            }
+
+            header {
+                margin-bottom: 3rem;
+                padding: 2rem 0;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+                letter-spacing: 0px;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+                letter-spacing: 0.5px;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr 1.5fr;
+                gap: 2rem;
+            }
+
+            .card {
+                padding: 2rem;
+            }
+
+            .card h2 {
+                font-size: 1.3rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+
+            label {
+                font-size: 0.9rem;
+                letter-spacing: 0px;
+            }
+
+            input[type="number"],
+            input[type="text"] {
+                padding: 0.8rem;
+                font-size: 1rem;
+            }
+
+            .button-group {
+                flex-direction: row;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+
+            #chartContainer {
+                height: 400px;
+                margin-bottom: 2rem;
+            }
+
+            #resultsTable {
+                font-size: 1rem;
+            }
+
+            #resultsTable th {
+                padding: 1rem;
+                font-size: 0.85rem;
+                letter-spacing: 0px;
+            }
+
+            #resultsTable td {
+                padding: 0.8rem 1rem;
+            }
+        }
+
+        .formula-box {
+            background: var(--highlight);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            border-left: 4px solid var(--accent-secondary);
+        }
+
+        .calculation-steps {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+
+        .calculation-steps h3 {
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .calculation-steps .step {
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: var(--bg-card);
+            border-radius: 4px;
+        }
+
+        .result-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .statistics-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .statistic-card {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .statistic-card h3 {
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        @media (min-width: 768px) {
+            .statistics-container {
+                gap: 2rem;
+            }
+
+            .statistic-card h3 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Valor Esperado</h1>
+            <p class="subtitle">Análisis de Decisiones</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Panel de entrada -->
+            <div class="card">
+                <h2>Configuración</h2>
+                
+                <div class="alert" id="alertBox"></div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="useInitialInvestment">
+                    <label for="useInitialInvestment">Usar inversión inicial</label>
+                </div>
+
+                <div class="form-group">
+                    <label for="initialInvestment">Inversión inicial</label>
+                    <input type="number" id="initialInvestment" step="0.01" value="0" disabled>
+                </div>
+
+                <div class="form-group">
+                    <label for="numEvents">Número de eventos</label>
+                    <input type="number" id="numEvents" min="2" max="10" value="2">
+                </div>
+
+                <div id="eventsContainer"></div>
+
+                <div class="button-group">
+                    <button id="addEventBtn" class="btn-secondary">+ Agregar evento</button>
+                    <button id="removeEventBtn" class="btn-secondary">- Eliminar último</button>
+                </div>
+
+                <div class="button-group">
+                    <button id="calculateBtn">Calcular</button>
+                    <button id="captureBtn" class="btn-success">Capturar</button>
+                </div>
+
+                <div class="formula-box">
+                    <strong>Fórmula del Valor Esperado:</strong><br>
+                    E(X) = Σ[xi × P(xi)]<br>
+                    E(X) = x₁×P(x₁) + x₂×P(x₂) + ... + xₙ×P(xₙ)
+                </div>
+            </div>
+
+            <!-- Panel de resultados -->
+            <div>
+                <div class="card results-section" id="resultsSection">
+                    <h2>Gráfica de Probabilidades</h2>
+                    
+                    <div id="chartContainer">
+                        <canvas id="chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card results-section" id="tableSection">
+                    <h2>Tabla de Eventos</h2>
+                    
+                    <div style="overflow-x: auto;">
+                        <table id="resultsTable">
+                            <tbody id="tableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card results-section" id="calculationSection">
+                    <h2>Cálculo del Valor Esperado</h2>
+                    
+                    <div class="calculation-steps">
+                        <h3>Paso a Paso</h3>
+                        <div id="calculationSteps"></div>
+                    </div>
+
+                    <div class="result-number" id="expectedValueResult">-</div>
+                </div>
+
+                <div class="card results-section" id="statisticsSection">
+                    <h2>Estadísticos</h2>
+                    
+                    <div class="statistics-container">
+                        <div class="statistic-card">
+                            <h3>Varianza</h3>
+                            <div class="formula-box">
+                                Var(X) = Σ[(xi - E(X))² × P(xi)]
+                            </div>
+                            <div class="result-number" id="varianceResult">-</div>
+                        </div>
+
+                        <div class="statistic-card">
+                            <h3>Desviación Estándar</h3>
+                            <div class="formula-box">
+                                σ(X) = √Var(X)
+                            </div>
+                            <div class="result-number" id="stdDevResult">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="menu.js"></script>
+    <script>
+        let chart = null;
+        let events = [];
+
+        // Inicializar eventos
+        function initializeEvents() {
+            const numEvents = parseInt(document.getElementById('numEvents').value) || 2;
+            events = [];
+            for (let i = 0; i < numEvents; i++) {
+                events.push({
+                    name: i === 0 ? 'Gana' : i === 1 ? 'Pierde' : `Evento ${i + 1}`,
+                    value: i === 0 ? 0 : i === 1 ? 0 : 0,
+                    probability: i === 0 ? 0.5 : i === 1 ? 0.5 : 0
+                });
+            }
+            renderEvents();
+        }
+
+        // Renderizar eventos
+        function renderEvents() {
+            const container = document.getElementById('eventsContainer');
+            const useInitial = document.getElementById('useInitialInvestment').checked;
+            
+            container.innerHTML = '';
+            
+            events.forEach((event, index) => {
+                const card = document.createElement('div');
+                card.className = 'event-card';
+                
+                const valueLabel = useInitial ? 'Valor recibido' : 'Valor neto';
+                
+                card.innerHTML = `
+                    <h3>Evento ${index + 1}</h3>
+                    <div class="form-group">
+                        <label for="eventName${index}">Nombre del evento</label>
+                        <input type="text" id="eventName${index}" value="${event.name}">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventValue${index}">${valueLabel}</label>
+                        <input type="number" id="eventValue${index}" step="0.01" value="${event.value}">
+                    </div>
+                    <div class="form-group">
+                        <label for="eventProb${index}">Probabilidad P(x)</label>
+                        <input type="number" id="eventProb${index}" min="0" max="1" step="0.001" value="${event.probability}">
+                    </div>
+                    <div class="net-value" id="netValue${index}"></div>
+                `;
+                
+                container.appendChild(card);
+            });
+            
+            updateNetValues();
+        }
+
+        // Actualizar valores netos
+        function updateNetValues() {
+            const useInitial = document.getElementById('useInitialInvestment').checked;
+            const initialInvestment = parseFloat(document.getElementById('initialInvestment').value) || 0;
+            
+            events.forEach((event, index) => {
+                const valueInput = document.getElementById(`eventValue${index}`);
+                const value = parseFloat(valueInput.value) || 0;
+                const netValueDiv = document.getElementById(`netValue${index}`);
+                
+                if (useInitial) {
+                    const netValue = value - initialInvestment;
+                    netValueDiv.innerHTML = `→ Valor neto: <strong>${netValue >= 0 ? '+' : ''}${netValue.toFixed(2)}</strong>`;
+                    netValueDiv.className = 'net-value ' + (netValue >= 0 ? 'positive' : 'negative');
+                } else {
+                    netValueDiv.innerHTML = '';
+                }
+            });
+        }
+
+        // Leer datos de eventos
+        function getEventsData() {
+            const useInitial = document.getElementById('useInitialInvestment').checked;
+            const initialInvestment = parseFloat(document.getElementById('initialInvestment').value) || 0;
+            
+            return events.map((event, index) => {
+                const name = document.getElementById(`eventName${index}`).value;
+                const rawValue = parseFloat(document.getElementById(`eventValue${index}`).value) || 0;
+                const probability = parseFloat(document.getElementById(`eventProb${index}`).value) || 0;
+                
+                const netValue = useInitial ? rawValue - initialInvestment : rawValue;
+                
+                return { name, value: netValue, probability };
+            });
+        }
+
+        // Validar datos
+        function validateData(eventsData) {
+            const errors = [];
+            
+            const sumProb = eventsData.reduce((sum, e) => sum + e.probability, 0);
+            if (Math.abs(sumProb - 1) > 0.0001) {
+                errors.push(`Las probabilidades deben sumar 1 (actualmente suman ${sumProb.toFixed(4)})`);
+            }
+            
+            eventsData.forEach((e, i) => {
+                if (e.probability < 0 || e.probability > 1) {
+                    errors.push(`Evento ${i + 1}: La probabilidad debe estar entre 0 y 1`);
+                }
+                if (!e.name.trim()) {
+                    errors.push(`Evento ${i + 1}: Debe tener un nombre`);
+                }
+            });
+            
+            return errors;
+        }
+
+        // Calcular esperanza
+        function calculateExpectedValue(eventsData) {
+            return eventsData.reduce((sum, e) => sum + (e.value * e.probability), 0);
+        }
+
+        // Calcular varianza
+        function calculateVariance(eventsData, expectedValue) {
+            return eventsData.reduce((sum, e) => {
+                return sum + (Math.pow(e.value - expectedValue, 2) * e.probability);
+            }, 0);
+        }
+
+        // Función principal
+        function calculate() {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.classList.remove('show');
+            
+            const eventsData = getEventsData();
+            
+            const errors = validateData(eventsData);
+            if (errors.length > 0) {
+                alertBox.textContent = errors.join('. ');
+                alertBox.classList.add('show');
+                return;
+            }
+            
+            const expectedValue = calculateExpectedValue(eventsData);
+            const variance = calculateVariance(eventsData, expectedValue);
+            const stdDev = Math.sqrt(variance);
+            
+            createChart(eventsData);
+            createTable(eventsData);
+            showCalculation(eventsData, expectedValue);
+            showStatistics(variance, stdDev);
+            
+            document.getElementById('resultsSection').classList.add('show');
+            document.getElementById('tableSection').classList.add('show');
+            document.getElementById('calculationSection').classList.add('show');
+            document.getElementById('statisticsSection').classList.add('show');
+        }
+
+        // Crear gráfica
+        function createChart(eventsData) {
+            const ctx = document.getElementById('chart').getContext('2d');
+            
+            if (chart) {
+                chart.destroy();
+            }
+            
+            const labels = eventsData.map(e => e.name);
+            const data = eventsData.map(e => e.probability);
+            
+            chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Probabilidad',
+                        data: data,
+                        backgroundColor: '#5a7c65',
+                        borderColor: '#5a7c65',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'P(x) = ' + context.parsed.y.toFixed(4);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Eventos',
+                                color: '#2c2c2c',
+                                font: { size: 14 }
+                            },
+                            ticks: { color: '#5a5a5a' },
+                            grid: { color: '#e0e0d8' }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Probabilidad',
+                                color: '#2c2c2c',
+                                font: { size: 14 }
+                            },
+                            ticks: { color: '#5a5a5a' },
+                            grid: { color: '#e0e0d8' },
+                            beginAtZero: true,
+                            max: 1
+                        }
+                    }
+                }
+            });
+        }
+
+        // Crear tabla (invertida: eventos como columnas)
+        function createTable(eventsData) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            // Fila 1: Nombres de eventos
+            const headerRow = tbody.insertRow();
+            const headerCell = headerRow.insertCell(0);
+            headerCell.innerHTML = '<strong>Evento</strong>';
+            headerCell.style.background = 'var(--bg-secondary)';
+            
+            eventsData.forEach(e => {
+                const cell = headerRow.insertCell();
+                cell.textContent = e.name;
+            });
+            
+            // Fila 2: Valores (x)
+            const valueRow = tbody.insertRow();
+            const valueLabel = valueRow.insertCell(0);
+            valueLabel.innerHTML = '<strong>x</strong>';
+            valueLabel.style.background = 'var(--bg-secondary)';
+            
+            eventsData.forEach(e => {
+                const cell = valueRow.insertCell();
+                cell.textContent = e.value.toFixed(2);
+            });
+            
+            // Fila 3: Probabilidades P(x)
+            const probRow = tbody.insertRow();
+            const probLabel = probRow.insertCell(0);
+            probLabel.innerHTML = '<strong>P(x)</strong>';
+            probLabel.style.background = 'var(--bg-secondary)';
+            
+            eventsData.forEach(e => {
+                const cell = probRow.insertCell();
+                cell.textContent = e.probability.toFixed(4);
+            });
+        }
+
+        // Mostrar cálculo
+        function showCalculation(eventsData, expectedValue) {
+            const stepsDiv = document.getElementById('calculationSteps');
+            
+            let html = '<div class="step">E(X) = Σ[xi × P(xi)]</div>';
+            
+            const terms = eventsData.map(e => `${e.value.toFixed(2)}(${e.probability.toFixed(4)})`);
+            html += `<div class="step">E(X) = ${terms.join(' + ')}</div>`;
+            
+            const products = eventsData.map(e => (e.value * e.probability).toFixed(2));
+            html += `<div class="step">E(X) = ${products.join(' + ')}</div>`;
+            
+            stepsDiv.innerHTML = html;
+            
+            document.getElementById('expectedValueResult').textContent = 
+                `E(X) = ${expectedValue.toFixed(2)}`;
+        }
+
+        // Mostrar estadísticos
+        function showStatistics(variance, stdDev) {
+            document.getElementById('varianceResult').textContent = 
+                `Var(X) = ${variance.toFixed(2)}`;
+            document.getElementById('stdDevResult').textContent = 
+                `σ(X) = ${stdDev.toFixed(2)}`;
+        }
+
+        // Capturar gráfica
+        function captureChart() {
+            if (chart) {
+                const link = document.createElement('a');
+                link.download = 'valor_esperado.png';
+                link.href = chart.toBase64Image();
+                link.click();
+            }
+        }
+
+        // Event listeners
+        document.getElementById('useInitialInvestment').addEventListener('change', function() {
+            document.getElementById('initialInvestment').disabled = !this.checked;
+            renderEvents();
+        });
+
+        document.getElementById('initialInvestment').addEventListener('input', updateNetValues);
+
+        document.getElementById('numEvents').addEventListener('change', function() {
+            const num = Math.max(2, Math.min(10, parseInt(this.value) || 2));
+            this.value = num;
+            
+            // Ajustar array de eventos
+            while (events.length < num) {
+                events.push({
+                    name: `Evento ${events.length + 1}`,
+                    value: 0,
+                    probability: 0
+                });
+            }
+            while (events.length > num) {
+                events.pop();
+            }
+            
+            renderEvents();
+        });
+
+        document.getElementById('addEventBtn').addEventListener('click', function() {
+            const numInput = document.getElementById('numEvents');
+            const currentNum = parseInt(numInput.value) || 2;
+            if (currentNum < 10) {
+                numInput.value = currentNum + 1;
+                numInput.dispatchEvent(new Event('change'));
+            }
+        });
+
+        document.getElementById('removeEventBtn').addEventListener('click', function() {
+            const numInput = document.getElementById('numEvents');
+            const currentNum = parseInt(numInput.value) || 2;
+            if (currentNum > 2) {
+                numInput.value = currentNum - 1;
+                numInput.dispatchEvent(new Event('change'));
+            }
+        });
+
+        document.getElementById('calculateBtn').addEventListener('click', calculate);
+        document.getElementById('captureBtn').addEventListener('click', captureChart);
+
+        // Actualizar valores netos al cambiar inputs
+        document.getElementById('eventsContainer').addEventListener('input', updateNetValues);
+
+        // Inicializar
+        initializeEvents();
+    </script>
+</body>
+</html>

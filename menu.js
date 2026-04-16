@@ -23,7 +23,8 @@ const MENU_CONFIG = {
         {
             nombre: "Otras Calculadoras",
             paginas: [
-                { archivo: "valor-esperado.html", nombre: "Esperanza Matemática \"tab\"" }
+                { archivo: "valor-esperado.html", nombre: "Esperanza Matemática \"tab\"" },
+                { archivo: "generador aleatorio.html", nombre: "Generador de numeros aleatorios"}
             ]
         }
     ],
@@ -203,9 +204,9 @@ const StyleManager = {
      */
     getEstilosCSS() {
         return `
-            /* ========================================
-               MENÚ HAMBURGUESA - ESTILOS
-               ======================================== */
+                /* ========================================
+                MENÚ HAMBURGUESA - ESTILOS
+                ======================================= */
             
             #menu-hamburguesa {
                 position: fixed;

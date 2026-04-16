@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Números Aleatorios</title>
+    <style>
+        :root {
+            --bg-primary: #b4b4b4;
+            --bg-secondary: #ffffff;
+            --bg-card: #ddf0e5;
+            --accent-primary: #00774f;
+            --accent-secondary: #5a7c65;
+            --text-primary: #2c2c2c;
+            --text-secondary: #5a5a5a;
+            --error: #bd2116;
+            --success: #178d5c;
+            --border: #d4d4c8;
+            --highlight: #e8f0eb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem 0;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--accent-primary);
+            letter-spacing: 0px;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            font-style: italic;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            padding: 1.25rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            font-size: 1.1rem;
+            color: var(--accent-primary);
+            margin-bottom: 1.25rem;
+            letter-spacing: 0px;
+            border-bottom: 2px solid var(--accent-primary);
+            padding-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            letter-spacing: 0px;
+            font-weight: 500;
+        }
+
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 0.7rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--highlight);
+        }
+
+        input[type="number"]:disabled {
+            background: #e8e8e8;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent-primary);
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+            font-size: 0.95rem;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: var(--accent-secondary);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #4a4a4a;
+        }
+
+        .alert {
+            padding: 1rem;
+            background: #fef5f5;
+            border: 1px solid var(--error);
+            border-left: 4px solid var(--error);
+            border-radius: 4px;
+            color: var(--error);
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #resultsTable {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            font-size: 0.85rem;
+        }
+
+        #resultsTable th {
+            background: var(--bg-secondary);
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            color: var(--accent-primary);
+            font-size: 0.8rem;
+            letter-spacing: 0px;
+            border: 1px solid var(--border);
+            font-weight: 600;
+        }
+
+        #resultsTable td {
+            padding: 0.6rem 0.5rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        #resultsTable tr:hover {
+            background: var(--highlight);
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .results-section.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                padding: 2rem;
+            }
+
+            header {
+                margin-bottom: 3rem;
+                padding: 2rem 0;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+                letter-spacing: 0px;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+                letter-spacing: 0.5px;
+            }
+
+            .main-grid {
+                grid-template-columns: 1fr 1.5fr;
+                gap: 2rem;
+            }
+
+            .card {
+                padding: 2rem;
+            }
+
+            .card h2 {
+                font-size: 1.3rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .form-group {
+                margin-bottom: 1.5rem;
+            }
+
+            label {
+                font-size: 0.9rem;
+                letter-spacing: 0px;
+            }
+
+            input[type="number"],
+            select {
+                padding: 0.8rem;
+                font-size: 1rem;
+            }
+
+            .button-group {
+                flex-direction: row;
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+
+            #resultsTable {
+                font-size: 1rem;
+            }
+
+            #resultsTable th {
+                padding: 1rem;
+                font-size: 0.85rem;
+                letter-spacing: 0px;
+            }
+
+            #resultsTable td {
+                padding: 0.8rem 1rem;
+            }
+        }
+
+        .input-small {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0rem;
+        }
+
+        @media (min-width: 500px) {
+            .input-small {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        .info-box {
+            background: var(--highlight);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            border-left: 4px solid var(--accent-secondary);
+        }
+
+        .single-number-display {
+            text-align: center;
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 2px solid var(--accent-primary);
+            margin: 1rem 0;
+        }
+
+        .single-number-display .number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .single-number-display .label {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .statistics-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .statistic-card {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 1.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .statistic-card h3 {
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--accent-primary);
+        }
+
+        .result-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        @media (min-width: 768px) {
+            .statistics-container {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+
+            .statistic-card h3 {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Generador de Números Aleatorios</h1>
+            <p class="subtitle">Herramienta Estadística</p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Panel de entrada -->
+            <div class="card">
+                <h2>Configuración</h2>
+                
+                <div class="alert" id="alertBox"></div>
+
+                <div class="form-group input-small">
+                    <div>
+                        <label for="minValue">Valor mínimo</label>
+                        <input type="number" id="minValue" value="1">
+                    </div>
+                    <div>
+                        <label for="maxValue">Valor máximo</label>
+                        <input type="number" id="maxValue" value="100">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="numberType">Tipo de números</label>
+                    <select id="numberType">
+                        <option value="integer">Enteros</option>
+                        <option value="decimal">Decimales</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="decimalPlacesGroup" style="display: none;">
+                    <label for="decimalPlaces">Decimales</label>
+                    <input type="number" id="decimalPlaces" min="1" max="10" value="2">
+                </div>
+
+                <div class="checkbox-group">
+                    <input type="checkbox" id="multipleNumbers">
+                    <label for="multipleNumbers">Generar múltiples números</label>
+                </div>
+
+                <div class="form-group" id="quantityGroup" style="display: none;">
+                    <label for="quantity">Cantidad de números</label>
+                    <input type="number" id="quantity" min="2" max="10000" value="10">
+                </div>
+
+                <div class="form-group" id="duplicatesGroup" style="display: none;">
+                    <label for="allowDuplicates">Repetición</label>
+                    <select id="allowDuplicates">
+                        <option value="true">Permitir números repetidos</option>
+                        <option value="false">Sin repetir (único por número)</option>
+                    </select>
+                </div>
+
+                <div class="button-group">
+                    <button id="generateBtn">Generar</button>
+                    <button id="copyBtn" class="btn-secondary" style="display: none;">Copiar resultados</button>
+                </div>
+
+                <div class="info-box">
+                    <strong>💡 Tip:</strong> Útil para muestras aleatorias, simulaciones, sorteos, y análisis estadístico.
+                </div>
+            </div>
+
+            <!-- Panel de resultados -->
+            <div>
+                <div class="card results-section" id="singleResultSection">
+                    <h2>Número Generado</h2>
+                    
+                    <div class="single-number-display">
+                        <div class="number" id="singleNumber">-</div>
+                        <div class="label">Número Aleatorio</div>
+                    </div>
+                </div>
+
+                <div class="card results-section" id="tableSection">
+                    <h2>Números Generados</h2>
+                    
+                    <div style="overflow-x: auto;">
+                        <table id="resultsTable">
+                            <thead>
+                                <tr id="tableHeader">
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card results-section" id="statisticsSection">
+                    <h2>Estadísticos</h2>
+                    
+                    <div class="statistics-container">
+                        <div class="statistic-card">
+                            <h3>Media (Promedio)</h3>
+                            <div class="result-number" id="meanResult">-</div>
+                        </div>
+
+                        <div class="statistic-card">
+                            <h3>Mediana</h3>
+                            <div class="result-number" id="medianResult">-</div>
+                        </div>
+
+                        <div class="statistic-card">
+                            <h3>Mínimo</h3>
+                            <div class="result-number" id="minResult">-</div>
+                        </div>
+
+                        <div class="statistic-card">
+                            <h3>Máximo</h3>
+                            <div class="result-number" id="maxResult">-</div>
+                        </div>
+
+                        <div class="statistic-card">
+                            <h3>Desviación Estándar</h3>
+                            <div class="result-number" id="stdDevResult">-</div>
+                        </div>
+
+                        <div class="statistic-card">
+                            <h3>Rango</h3>
+                            <div class="result-number" id="rangeResult">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="menu.js"></script>
+    <script>
+        let generatedNumbers = [];
+
+        // Toggle grupos según opciones
+        document.getElementById('numberType').addEventListener('change', function() {
+            document.getElementById('decimalPlacesGroup').style.display = 
+                this.value === 'decimal' ? 'block' : 'none';
+        });
+
+        document.getElementById('multipleNumbers').addEventListener('change', function() {
+            const display = this.checked ? 'block' : 'none';
+            document.getElementById('quantityGroup').style.display = display;
+            document.getElementById('duplicatesGroup').style.display = display;
+        });
+
+        // Generar número aleatorio
+        function generateRandomNumber(min, max, isInteger, decimals) {
+            if (isInteger) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            } else {
+                const num = Math.random() * (max - min) + min;
+                return parseFloat(num.toFixed(decimals));
+            }
+        }
+
+        // Validar datos
+        function validateInputs() {
+            const min = parseFloat(document.getElementById('minValue').value);
+            const max = parseFloat(document.getElementById('maxValue').value);
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const allowDuplicates = document.getElementById('allowDuplicates').value === 'true';
+            const isMultiple = document.getElementById('multipleNumbers').checked;
+            const isInteger = document.getElementById('numberType').value === 'integer';
+
+            const errors = [];
+
+            if (isNaN(min) || isNaN(max)) {
+                errors.push('Los valores mínimo y máximo deben ser números válidos');
+            }
+
+            if (min >= max) {
+                errors.push('El valor mínimo debe ser menor que el máximo');
+            }
+
+            if (isMultiple) {
+                if (isNaN(quantity) || quantity < 2) {
+                    errors.push('La cantidad debe ser al menos 2');
+                }
+
+                if (!allowDuplicates && isInteger) {
+                    const range = max - min + 1;
+                    if (quantity > range) {
+                        errors.push(`Sin repetir, solo puedes generar hasta ${range} números únicos en este rango`);
+                    }
+                }
+            }
+
+            return errors;
+        }
+
+        // Generar números
+        function generate() {
+            const alertBox = document.getElementById('alertBox');
+            alertBox.classList.remove('show');
+
+            const errors = validateInputs();
+            if (errors.length > 0) {
+                alertBox.textContent = errors.join('. ');
+                alertBox.classList.add('show');
+                return;
+            }
+
+            const min = parseFloat(document.getElementById('minValue').value);
+            const max = parseFloat(document.getElementById('maxValue').value);
+            const isInteger = document.getElementById('numberType').value === 'integer';
+            const decimals = parseInt(document.getElementById('decimalPlaces').value) || 2;
+            const isMultiple = document.getElementById('multipleNumbers').checked;
+            const quantity = parseInt(document.getElementById('quantity').value) || 1;
+            const allowDuplicates = document.getElementById('allowDuplicates').value === 'true';
+
+            generatedNumbers = [];
+
+            if (!isMultiple) {
+                // Un solo número
+                const num = generateRandomNumber(min, max, isInteger, decimals);
+                generatedNumbers.push(num);
+                showSingleNumber(num);
+            } else {
+                // Múltiples números
+                if (allowDuplicates) {
+                    // Con repetición
+                    for (let i = 0; i < quantity; i++) {
+                        generatedNumbers.push(generateRandomNumber(min, max, isInteger, decimals));
+                    }
+                } else {
+                    // Sin repetición (solo para enteros)
+                    const available = [];
+                    for (let i = min; i <= max; i++) {
+                        available.push(i);
+                    }
+                    
+                    for (let i = 0; i < quantity; i++) {
+                        const randomIndex = Math.floor(Math.random() * available.length);
+                        generatedNumbers.push(available[randomIndex]);
+                        available.splice(randomIndex, 1);
+                    }
+                }
+                
+                showMultipleNumbers();
+                calculateStatistics();
+            }
+        }
+
+        // Mostrar un solo número
+        function showSingleNumber(num) {
+            document.getElementById('singleNumber').textContent = num;
+            document.getElementById('singleResultSection').classList.add('show');
+            document.getElementById('tableSection').classList.remove('show');
+            document.getElementById('statisticsSection').classList.remove('show');
+            document.getElementById('copyBtn').style.display = 'none';
+        }
+
+        // Mostrar múltiples números en tabla
+        function showMultipleNumbers() {
+            const header = document.getElementById('tableHeader');
+            const tbody = document.getElementById('tableBody');
+            
+            header.innerHTML = '';
+            tbody.innerHTML = '';
+
+            // Calcular columnas (máximo 10 por fila)
+            const cols = Math.min(10, generatedNumbers.length);
+            const rows = Math.ceil(generatedNumbers.length / cols);
+
+            // Crear headers
+            for (let i = 0; i < cols; i++) {
+                const th = document.createElement('th');
+                th.textContent = `#${i + 1}`;
+                header.appendChild(th);
+            }
+
+            // Crear filas
+            for (let r = 0; r < rows; r++) {
+                const row = tbody.insertRow();
+                for (let c = 0; c < cols; c++) {
+                    const index = r * cols + c;
+                    const cell = row.insertCell();
+                    if (index < generatedNumbers.length) {
+                        cell.textContent = generatedNumbers[index];
+                    } else {
+                        cell.textContent = '-';
+                        cell.style.color = '#ccc';
+                    }
+                }
+            }
+
+            document.getElementById('singleResultSection').classList.remove('show');
+            document.getElementById('tableSection').classList.add('show');
+            document.getElementById('copyBtn').style.display = 'block';
+        }
+
+        // Calcular estadísticos
+        function calculateStatistics() {
+            const sorted = [...generatedNumbers].sort((a, b) => a - b);
+            const n = generatedNumbers.length;
+
+            // Media
+            const mean = generatedNumbers.reduce((sum, num) => sum + num, 0) / n;
+
+            // Mediana
+            let median;
+            if (n % 2 === 0) {
+                median = (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+            } else {
+                median = sorted[Math.floor(n / 2)];
+            }
+
+            // Min, Max, Rango
+            const min = sorted[0];
+            const max = sorted[n - 1];
+            const range = max - min;
+
+            // Desviación estándar
+            const variance = generatedNumbers.reduce((sum, num) => 
+                sum + Math.pow(num - mean, 2), 0) / n;
+            const stdDev = Math.sqrt(variance);
+
+            // Mostrar
+            const decimals = document.getElementById('numberType').value === 'decimal' 
+                ? parseInt(document.getElementById('decimalPlaces').value) || 2 
+                : 2;
+
+            document.getElementById('meanResult').textContent = mean.toFixed(decimals);
+            document.getElementById('medianResult').textContent = median.toFixed(decimals);
+            document.getElementById('minResult').textContent = min;
+            document.getElementById('maxResult').textContent = max;
+            document.getElementById('stdDevResult').textContent = stdDev.toFixed(decimals);
+            document.getElementById('rangeResult').textContent = range.toFixed(decimals);
+
+            document.getElementById('statisticsSection').classList.add('show');
+        }
+
+        // Copiar resultados
+        function copyResults() {
+            const text = generatedNumbers.join(', ');
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('copyBtn');
+                const originalText = btn.textContent;
+                btn.textContent = '✓ Copiado';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                alert('No se pudo copiar al portapapeles');
+            });
+        }
+
+        // Event listeners
+        document.getElementById('generateBtn').addEventListener('click', generate);
+        document.getElementById('copyBtn').addEventListener('click', copyResults);
+    </script>
+</body>
+</html>

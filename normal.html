@@ -597,6 +597,85 @@
                 font-size: 1.2rem;
             }
         }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            overflow: auto;
+        }
+
+        .modal.show {
+            display: block;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            margin: 2rem auto;
+            padding: 2rem;
+            border-radius: 8px;
+            max-width: 900px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--text-secondary);
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            width: auto;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: var(--accent-primary);
+            transform: none;
+        }
+
+        .modal h2 {
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+        }
+
+        .modal table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .modal table th,
+        .modal table td {
+            border: 1px solid var(--border);
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .modal table th {
+            background: var(--accent-primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 1rem;
+                padding: 1.5rem;
+                max-width: calc(100% - 2rem);
+            }
+        }
     </style>
 </head>
 <body>
@@ -683,13 +762,18 @@
                     
                         <!-- Tab: Tabla de valores Z -->
                         <div class="tab-content active" id="tab-tabla">
+                            <div style="margin-bottom: 1rem;">
+                                <button id="openModalBtn" style="padding: 0.6rem 1rem; background: var(--accent-secondary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">
+                                    📊 Ver tabla completa de estandarización
+                                </button>
+                            </div>
                             <div style="overflow-x: auto;">
                                 <table id="resultsTable">
                                     <thead>
                                         <tr>
-                                            <th>Valor Z</th>
+                                            <th>Punto</th>
                                             <th>Fórmula</th>
-                                            <th>Valor X</th>
+                                            <th>Valor de X</th>
                                             <th>P(X ≤ x)</th>
                                         </tr>
                                     </thead>
@@ -780,6 +864,29 @@
         </div>
     </div>
 
+    <!-- Modal de tabla completa -->
+    <div id="zModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" id="closeModal">×</button>
+            <h2>Tabla de Estandarización Completa</h2>
+            <div style="overflow-x: auto;">
+                <table id="modalTable">
+                    <thead>
+                        <tr>
+                            <th>Z</th>
+                            <th>Fórmula</th>
+                            <th>Valor X</th>
+                            <th>P(Z ≤ z)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalTableBody">
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="menu.js"></script>
     <script>
         let chart = null;
@@ -859,6 +966,9 @@
             // Crear tabla de valores Z
             createTable(mu, sigma, decimals);
 
+            // Poblar modal
+            populateModal(mu, sigma, decimals);
+
             // Mostrar estadísticos
             calculateStatistics(mu, sigma, decimals);
 
@@ -896,6 +1006,36 @@
             }
 
             const datasets = [];
+
+            // Líneas azules de regla empírica (siempre visibles)
+            const empiricalLines = [
+                { z: -3, label: 'μ - 3σ' },
+                { z: -2, label: 'μ - 2σ' },
+                { z: -1, label: 'μ - σ' },
+                { z: 1, label: 'μ + σ' },
+                { z: 2, label: 'μ + 2σ' },
+                { z: 3, label: 'μ + 3σ' }
+            ];
+
+            empiricalLines.forEach(line => {
+                const xVal = mu + line.z * sigma;
+                datasets.push({
+                    label: line.label,
+                    data: [
+                        { x: xVal, y: 0 },
+                        { x: xVal, y: normalPDF(xVal, mu, sigma) }
+                    ],
+                    borderColor: '#4a90e2',
+                    borderWidth: 1.5,
+                    borderDash: [3, 3],
+                    pointRadius: 4,
+                    pointBackgroundColor: '#4a90e2',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 1,
+                    showLine: true,
+                    fill: false
+                });
+            });
 
             // Si hay configuración de sombreado (desde probabilidades)
             if (shadingConfig) {
@@ -1109,10 +1249,47 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
-            // Valores Z típicos: -3, -2, -1, 0, 1, 2, 3
-            const zValues = [-3, -2.5, -2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3];
+            // Regla empírica: μ±σ, μ±2σ, μ±3σ
+            const empiricalRules = [
+                { z: -3, label: 'μ - 3σ' },
+                { z: -2, label: 'μ - 2σ' },
+                { z: -1, label: 'μ - σ' },
+                { z: 0, label: 'μ' },
+                { z: 1, label: 'μ + σ' },
+                { z: 2, label: 'μ + 2σ' },
+                { z: 3, label: 'μ + 3σ' }
+            ];
 
-            zValues.forEach(z => {
+            empiricalRules.forEach(rule => {
+                const row = tbody.insertRow();
+                const x = mu + rule.z * sigma;
+                const prob = normalCDF(x, mu, sigma);
+
+                const cellLabel = row.insertCell(0);
+                const cellFormula = row.insertCell(1);
+                const cellX = row.insertCell(2);
+                const cellProb = row.insertCell(3);
+
+                cellLabel.textContent = rule.label;
+                
+                if (rule.z >= 0) {
+                    cellFormula.textContent = `X = ${mu} + ${rule.z} × ${sigma}`;
+                } else {
+                    cellFormula.textContent = `X = ${mu} - ${Math.abs(rule.z)} × ${sigma}`;
+                }
+                
+                cellX.textContent = x.toFixed(decimals);
+                cellProb.textContent = prob.toFixed(decimals);
+            });
+        }
+
+        // Poblar tabla del modal con valores Z completos
+        function populateModal(mu, sigma, decimals) {
+            const tbody = document.getElementById('modalTableBody');
+            tbody.innerHTML = '';
+
+            // Valores Z de -3 a 3 en incrementos de 0.1
+            for (let z = -3.0; z <= 3.0; z += 0.1) {
                 const row = tbody.insertRow();
                 const x = mu + z * sigma;
                 const prob = normalCDF(x, mu, sigma);
@@ -1124,16 +1301,15 @@
 
                 cellZ.textContent = z.toFixed(1);
                 
-                // Mostrar la fórmula de conversión
                 if (z >= 0) {
-                    cellFormula.textContent = `X = ${mu} + ${z.toFixed(1)} × ${sigma}`;
+                    cellFormula.textContent = `(${x.toFixed(2)} - ${mu}) / ${sigma}`;
                 } else {
-                    cellFormula.textContent = `X = ${mu} - ${Math.abs(z).toFixed(1)} × ${sigma}`;
+                    cellFormula.textContent = `(${x.toFixed(2)} - ${mu}) / ${sigma}`;
                 }
                 
                 cellX.textContent = x.toFixed(decimals);
                 cellProb.textContent = prob.toFixed(decimals);
-            });
+            }
         }
 
         // Mostrar información del valor x
@@ -1318,6 +1494,22 @@
                 <div class="result-interpretation">${interpretation}</div>
                 ${formulaExplanation}
             `;
+        });
+
+        // Modal functionality
+        document.getElementById('openModalBtn').addEventListener('click', function() {
+            document.getElementById('zModal').classList.add('show');
+        });
+
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('zModal').classList.remove('show');
+        });
+
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('zModal');
+            if (event.target === modal) {
+                modal.classList.remove('show');
+            }
         });
 
         // Calcular automáticamente al cargar

@@ -676,6 +676,22 @@
                 max-width: calc(100% - 2rem);
             }
         }
+
+        /* Mode buttons */
+        .mode-btn.active {
+            background: var(--accent-primary) !important;
+            color: white !important;
+            border-color: var(--accent-primary) !important;
+        }
+
+        .mode-btn:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .mode-fields {
+            animation: fadeIn 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -692,14 +708,66 @@
                 
                 <div class="alert" id="alertBox"></div>
 
-                <div class="form-group input-small">
-                    <div>
-                        <label for="mu">μ (Media)</label>
-                        <input type="number" id="mu" step="0.01" value="0">
+                <!-- Selector de modo -->
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+                    <button type="button" class="mode-btn active" data-mode="normal" style="flex: 1; min-width: 100px; padding: 0.6rem; background: var(--accent-primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                        Normal (μ, σ)
+                    </button>
+                    <button type="button" class="mode-btn" data-mode="sample-mean" style="flex: 1; min-width: 100px; padding: 0.6rem; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                        Media Muestral (x̄)
+                    </button>
+                    <button type="button" class="mode-btn" data-mode="proportion" style="flex: 1; min-width: 100px; padding: 0.6rem; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 0.85rem;">
+                        Proporción (p)
+                    </button>
+                </div>
+
+                <!-- Campos para Normal -->
+                <div id="normalFields" class="mode-fields">
+                    <div class="form-group input-small">
+                        <div>
+                            <label for="mu">μ (Media poblacional)</label>
+                            <input type="number" id="mu" step="0.01" value="0">
+                        </div>
+                        <div>
+                            <label for="sigma">σ (Desviación estándar poblacional)</label>
+                            <input type="number" id="sigma" min="0.01" step="0.01" value="1">
+                        </div>
                     </div>
-                    <div>
-                        <label for="sigma">σ (Desviación estándar)</label>
-                        <input type="number" id="sigma" min="0.01" step="0.01" value="1">
+                </div>
+
+                <!-- Campos para Media Muestral -->
+                <div id="sampleMeanFields" class="mode-fields" style="display: none;">
+                    <div class="form-group input-small">
+                        <div>
+                            <label for="muSample">μ (Media poblacional)</label>
+                            <input type="number" id="muSample" step="0.01" value="0">
+                        </div>
+                        <div>
+                            <label for="sigmaSample">σ (Desviación estándar poblacional)</label>
+                            <input type="number" id="sigmaSample" min="0.01" step="0.01" value="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="nSample">n (Tamaño de muestra)</label>
+                        <input type="number" id="nSample" min="1" value="30">
+                    </div>
+                    <div class="form-group">
+                        <label for="xBarLabel">Variable (ej: salario, altura)</label>
+                        <input type="text" id="xBarLabel" placeholder="salario" value="salario">
+                    </div>
+                </div>
+
+                <!-- Campos para Proporción -->
+                <div id="proportionFields" class="mode-fields" style="display: none;">
+                    <div class="form-group input-small">
+                        <div>
+                            <label for="piProp">π (Proporción poblacional)</label>
+                            <input type="number" id="piProp" min="0" max="1" step="0.01" value="0.5">
+                        </div>
+                        <div>
+                            <label for="nProp">n (Tamaño de muestra)</label>
+                            <input type="number" id="nProp" min="1" value="100">
+                        </div>
                     </div>
                 </div>
 
@@ -757,6 +825,7 @@
                         <div class="tabs-header">
                             <button class="tab-button active" data-tab="tabla">Valores Z</button>
                             <button class="tab-button" data-tab="probabilidades">Probabilidades</button>
+                            <button class="tab-button" data-tab="planteamiento">Planteamiento</button>
                             <button class="tab-button" data-tab="estadisticos">Estadísticos</button>
                         </div>
                     
@@ -815,6 +884,13 @@
                             
                                 <div id="probabilityResult" style="display: none;">
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab: Planteamiento -->
+                        <div class="tab-content" id="tab-planteamiento">
+                            <div id="planteamientoContent" style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 6px; border: 1px solid var(--border);">
+                                <div id="planteamientoText" style="font-size: 1.1rem; line-height: 2;"></div>
                             </div>
                         </div>
 
@@ -889,7 +965,37 @@
 
     <script src="menu.js"></script>
     <script>
+    
         let chart = null;
+        let currentMode = 'normal';
+
+        // Cambiar modo
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Actualizar botones activos
+                document.querySelectorAll('.mode-btn').forEach(b => {
+                    b.classList.remove('active');
+                    b.style.background = 'var(--bg-secondary)';
+                    b.style.color = 'var(--text-primary)';
+                    b.style.border = '1px solid var(--border)';
+                });
+                this.classList.add('active');
+                this.style.background = 'var(--accent-primary)';
+                this.style.color = 'white';
+                
+                // Cambiar campos visibles
+                currentMode = this.dataset.mode;
+                document.querySelectorAll('.mode-fields').forEach(f => f.style.display = 'none');
+                
+                if (currentMode === 'normal') {
+                    document.getElementById('normalFields').style.display = 'block';
+                } else if (currentMode === 'sample-mean') {
+                    document.getElementById('sampleMeanFields').style.display = 'block';
+                } else if (currentMode === 'proportion') {
+                    document.getElementById('proportionFields').style.display = 'block';
+                }
+            });
+        });
 
         // Función de error (aproximación numérica)
         function erf(x) {
@@ -943,8 +1049,22 @@
 
         // Función principal de cálculo
         function calculate() {
-            const mu = parseFloat(document.getElementById('mu').value);
-            const sigma = parseFloat(document.getElementById('sigma').value);
+            let mu, sigma;
+            
+            if (currentMode === 'normal') {
+                mu = parseFloat(document.getElementById('mu').value);
+                sigma = parseFloat(document.getElementById('sigma').value);
+            } else if (currentMode === 'sample-mean') {
+                mu = parseFloat(document.getElementById('muSample').value);
+                const sigmaPop = parseFloat(document.getElementById('sigmaSample').value);
+                const n = parseFloat(document.getElementById('nSample').value);
+                sigma = sigmaPop / Math.sqrt(n); // σx̄ = σ / √n
+            } else if (currentMode === 'proportion') {
+                const pi = parseFloat(document.getElementById('piProp').value);
+                const n = parseFloat(document.getElementById('nProp').value);
+                mu = pi; // μp = π
+                sigma = Math.sqrt((pi * (1 - pi)) / n); // σp = √[π(1-π)/n]
+            }
             const xInput = document.getElementById('x').value;
             const x = xInput === '' ? null : parseFloat(xInput);
             const decimals = parseInt(document.getElementById('decimals').value) || 4;
@@ -968,6 +1088,9 @@
 
             // Poblar modal
             populateModal(mu, sigma, decimals);
+
+            // Mostrar planteamiento
+            showPlanteamiento(mu, sigma, decimals);
 
             // Mostrar estadísticos
             calculateStatistics(mu, sigma, decimals);
@@ -1334,6 +1457,58 @@
                 link.href = chart.toBase64Image();
                 link.click();
             }
+        }
+
+        // Mostrar planteamiento según modo
+        function showPlanteamiento(mu, sigma, decimals) {
+            const container = document.getElementById('planteamientoText');
+            let html = '';
+            
+            if (currentMode === 'normal') {
+                html = `
+                    <div><strong>Distribución Normal:</strong></div>
+                    <div>X ~ N(μ, σ)</div>
+                    <div>μ = ${mu.toFixed(decimals)}</div>
+                    <div>σ = ${sigma.toFixed(decimals)}</div>
+                `;
+            } else if (currentMode === 'sample-mean') {
+                const muPop = parseFloat(document.getElementById('muSample').value);
+                const sigmaPop = parseFloat(document.getElementById('sigmaSample').value);
+                const n = parseFloat(document.getElementById('nSample').value);
+                const variable = document.getElementById('xBarLabel').value || 'variable';
+                
+                html = `
+                    <div><strong>Teorema Central del Límite - Media Muestral:</strong></div>
+                    <div style="margin-top: 1rem;">n = ${n}</div>
+                    <div>x̄: ${variable} promedio</div>
+                    <div>x̄ ~ Normal</div>
+                    <div>μ<sub>x̄</sub> = μ = ${muPop.toFixed(decimals)}</div>
+                    <div>σ<sub>x̄</sub> = σ / √n = ${sigmaPop.toFixed(decimals)} / √${n} = ${sigma.toFixed(decimals)}</div>
+                `;
+            } else if (currentMode === 'proportion') {
+                const pi = parseFloat(document.getElementById('piProp').value);
+                const n = parseFloat(document.getElementById('nProp').value);
+                const check1 = n * pi;
+                const check2 = n * (1 - pi);
+                const isValid = check1 > 5 && check2 > 5;
+                
+                html = `
+                    <div><strong>Teorema Central del Límite - Proporción:</strong></div>
+                    <div style="margin-top: 1rem;">n = ${n}</div>
+                    <div>p: proporción muestral</div>
+                    <div>π = ${pi.toFixed(decimals)}</div>
+                    <div style="margin-top: 0.5rem;"><strong>Comprobación:</strong></div>
+                    <div>n(π) = ${n}(${pi.toFixed(decimals)}) = ${check1.toFixed(2)} ${check1 > 5 ? '✓' : '✗'} > 5</div>
+                    <div>n(1-π) = ${n}(${(1-pi).toFixed(decimals)}) = ${check2.toFixed(2)} ${check2 > 5 ? '✓' : '✗'} > 5</div>
+                    <div style="margin-top: 0.5rem; color: ${isValid ? 'var(--success)' : 'var(--error)'};">
+                        ${isValid ? '✓ Se puede usar aproximación normal' : '✗ NO se puede usar aproximación normal'}
+                    </div>
+                    <div style="margin-top: 1rem;">μ<sub>p</sub> = π = ${mu.toFixed(decimals)}</div>
+                    <div>σ<sub>p</sub> = √[π(1-π)/n] = √[${pi.toFixed(decimals)}×${(1-pi).toFixed(decimals)}/${n}] = ${sigma.toFixed(decimals)}</div>
+                `;
+            }
+            
+            container.innerHTML = html;
         }
 
         // Calcular y mostrar estadísticos
